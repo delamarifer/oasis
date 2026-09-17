@@ -28,7 +28,7 @@
     --danger: #C0563B;
   }
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
+    :root {
       --ground: #121411;
       --ink: #E6E4D8;
       --ink-soft: #9A9F8F;
@@ -61,6 +61,7 @@
     margin: 0;
     overflow: hidden;
   }
+  button { font: inherit; }
 
   #scene {
     position: fixed;
@@ -94,6 +95,68 @@
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--ink-faint);
+  }
+
+  /* ---- galaxy switcher ---- */
+  .galaxies {
+    position: fixed;
+    top: 22px;
+    left: 26px;
+    z-index: 4;
+    max-width: calc(50vw - 110px);
+  }
+  .galaxies .label {
+    font-size: 0.66rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 4px;
+  }
+  .galaxy-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 14px;
+  }
+  .galaxy {
+    background: none;
+    border: none;
+    padding: 3px 0;
+    font-family: "Marcellus", Georgia, serif;
+    font-size: 1rem;
+    color: var(--ink-faint);
+    cursor: pointer;
+    border-bottom: 1.5px solid transparent;
+  }
+  .galaxy:hover { color: var(--ink); }
+  .galaxy[aria-pressed="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+  .galaxy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  .galaxy.new {
+    font-family: "Mulish", sans-serif;
+    font-size: 0.8rem;
+    color: var(--ink-faint);
+  }
+  .galaxy.new:hover { color: var(--accent); }
+  .galaxy-input {
+    background: none;
+    border: none;
+    border-bottom: 1.5px solid var(--accent);
+    font-family: "Marcellus", Georgia, serif;
+    font-size: 1rem;
+    color: var(--ink);
+    padding: 3px 0;
+    width: 12ch;
+  }
+  .galaxy-input:focus { outline: none; }
+  @media (max-width: 760px) {
+    .galaxies {
+      top: 74px;
+      left: 16px; right: 16px;
+      max-width: none;
+      text-align: center;
+    }
+    .galaxies .label { display: none; }
+    .galaxy-row { justify-content: center; }
   }
 
   .hint {
@@ -141,10 +204,10 @@
     gap: 2px 16px;
     margin-bottom: 18px;
   }
+  .chips[hidden] { display: none; }
   .chip {
     background: none;
     border: none;
-    font: inherit;
     font-size: 0.85rem;
     color: var(--ink-soft);
     cursor: pointer;
@@ -159,20 +222,28 @@
     border-radius: 50%;
     background: var(--dot, var(--leaf));
   }
-  .chip[aria-pressed="true"] {
-    color: var(--ink);
-    border-bottom-color: var(--ink);
-  }
+  .chip[aria-pressed="true"] { color: var(--ink); border-bottom-color: var(--ink); }
   .chip:hover { color: var(--ink); }
   .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  .chip.new { color: var(--ink-faint); }
+  .chip.new:hover { color: var(--accent); }
 
-  h2.garden-title {
+  #garden-name {
+    display: block;
+    width: 100%;
+    background: none;
+    border: none;
+    border-bottom: 1px solid transparent;
     font-family: "Marcellus", Georgia, serif;
-    font-weight: 400;
     font-size: 1.45rem;
     color: var(--ink);
+    padding: 0 0 4px;
     margin: 0 0 2px;
   }
+  #garden-name:not([readonly]):hover { border-bottom-color: var(--line); }
+  #garden-name:not([readonly]):focus { outline: none; border-bottom-color: var(--accent); }
+  #garden-name[readonly] { cursor: default; }
+  #garden-name[readonly]:focus { outline: none; }
 
   .counts {
     color: var(--ink-faint);
@@ -191,6 +262,7 @@
     padding-bottom: 8px;
     margin-bottom: 4px;
   }
+  form[hidden] { display: none; }
   #task-input {
     flex: 1;
     background: none;
@@ -209,7 +281,6 @@
     border: 1px solid var(--line);
     border-radius: 999px;
     color: var(--ink-soft);
-    font: inherit;
     font-size: 0.82rem;
     font-weight: 700;
     padding: 5px 14px;
@@ -218,7 +289,6 @@
   }
   form button:hover { border-color: var(--accent); color: var(--accent); }
   form button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  form button:disabled { opacity: 0.5; cursor: default; }
 
   ul { list-style: none; margin: 0; padding: 0; }
   li {
@@ -229,8 +299,27 @@
     border-bottom: 1px solid var(--line);
   }
   li:last-child { border-bottom-color: transparent; }
-  li.pending { opacity: 0.55; }
-  .label { flex: 1; word-break: break-word; font-size: 0.95rem; }
+  .label {
+    flex: 1;
+    word-break: break-word;
+    font-size: 0.95rem;
+    cursor: text;
+    border-radius: 4px;
+  }
+  .label:hover { background: color-mix(in srgb, var(--line) 55%, transparent); }
+  .label:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .edit-input {
+    flex: 1;
+    min-width: 0;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--accent);
+    font: inherit;
+    font-size: 0.95rem;
+    color: var(--ink);
+    padding: 0 0 2px;
+  }
+  .edit-input:focus { outline: none; }
 
   .check {
     flex: none;
@@ -275,7 +364,17 @@
     text-transform: uppercase;
     color: var(--ink-faint);
   }
+  .section-label[hidden] { display: none; }
   #tended-list li { padding: 7px 2px; border-bottom-color: transparent; }
+
+  .session {
+    justify-content: space-between;
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+    padding: 8px 2px;
+    font-variant-numeric: tabular-nums;
+  }
+  .session .mins { color: var(--leaf); font-weight: 600; }
 
   .empty {
     color: var(--ink-faint);
@@ -284,7 +383,46 @@
     padding: 18px 0 6px;
   }
 
-  .setup {
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2px 16px;
+    margin-top: 22px;
+  }
+  .actions button {
+    background: none;
+    border: none;
+    font-size: 0.76rem;
+    color: var(--ink-faint);
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+  }
+  .actions button:hover { color: var(--ink); }
+  .actions button.danger:hover, .actions button.armed { color: var(--danger); }
+  .actions button:focus-visible { outline: 2px solid var(--accent); }
+
+  .sync {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    justify-content: center;
+    margin-top: 14px;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+  }
+  .sync .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--leaf-2);
+  }
+  .sync.err .dot { background: var(--danger); }
+  .sync.err { color: var(--danger); }
+
+  /* ---- full-screen cards (connect + galaxy setup) ---- */
+  .overlay {
     position: fixed;
     inset: 0;
     z-index: 10;
@@ -292,24 +430,26 @@
     place-items: center;
     background: var(--ground);
     padding: 24px;
+    overflow-y: auto;
   }
-  .setup[hidden] { display: none; }
-  .setup-card {
+  .overlay.soft { background: color-mix(in srgb, var(--ground) 86%, transparent); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .overlay[hidden] { display: none; }
+  .card {
     width: min(520px, 100%);
     text-align: center;
   }
-  .setup-card h2 {
+  .card h2 {
     font-family: "Marcellus", Georgia, serif;
     font-weight: 400;
     font-size: 1.6rem;
     margin: 0 0 8px;
   }
-  .setup-card p {
+  .card p {
     color: var(--ink-soft);
     font-size: 0.92rem;
     margin: 0 0 18px;
   }
-  .setup-card code {
+  .card code {
     font-size: 0.85em;
     background: var(--line);
     border-radius: 4px;
@@ -327,43 +467,61 @@
     padding: 12px;
   }
   #config-input:focus { outline: 2px solid var(--accent); border-color: transparent; }
-  .setup-card .err {
+  .card .err {
     color: var(--danger);
     font-size: 0.85rem;
     min-height: 1.3em;
     margin: 8px 0 0;
   }
-  .setup-card button {
+  .btn {
     margin-top: 14px;
     background: var(--accent);
     color: var(--ground);
     border: none;
     border-radius: 999px;
-    font: inherit;
     font-weight: 700;
     font-size: 0.9rem;
     padding: 9px 26px;
     cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
   }
-  .setup-card button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-  .sync {
+  .btn.quiet {
+    background: none;
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+  }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .steps {
+    list-style: none;
+    margin: 6px 0 4px;
+    padding: 0;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .steps li {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 14px;
     display: flex;
     align-items: center;
-    gap: 7px;
-    justify-content: center;
-    margin-top: 22px;
-    font-size: 0.72rem;
-    letter-spacing: 0.06em;
-    color: var(--ink-faint);
+    gap: 14px;
   }
-  .sync .dot {
-    width: 7px; height: 7px;
+  .steps .n {
+    flex: none;
+    width: 24px; height: 24px;
     border-radius: 50%;
-    background: var(--leaf-2);
+    background: var(--line);
+    color: var(--ink-soft);
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
   }
-  .sync.err .dot { background: var(--danger); }
-  .sync.err { color: var(--danger); }
+  .steps .txt { flex: 1; font-size: 0.9rem; }
+  .steps .btn { margin: 0; padding: 6px 16px; font-size: 0.82rem; flex: none; }
 
   @media (prefers-reduced-motion: reduce) {
     .remove { transition: none; }
@@ -379,36 +537,60 @@
   <div class="date" id="date"></div>
 </header>
 
+<nav class="galaxies" aria-label="Galaxies">
+  <div class="label">Galaxies</div>
+  <div class="galaxy-row" id="galaxies"></div>
+</nav>
+
 <div class="hint">Drag to orbit &nbsp;·&nbsp; scroll to zoom &nbsp;·&nbsp; click an island</div>
 
-<div class="setup" id="setup" hidden>
-  <div class="setup-card">
+<div class="overlay" id="setup" hidden>
+  <div class="card">
     <h2>Connect to Foquito</h2>
     <p>Paste your Foquito settings JSON below — it needs <code>supabaseUrl</code> and
     <code>supabaseAnonKey</code>. It's stored only in this browser.</p>
     <textarea id="config-input" spellcheck="false" aria-label="Foquito settings JSON"></textarea>
     <div class="err" id="config-err"></div>
-    <button id="config-save">Connect</button>
+    <button class="btn" id="config-save">Connect</button>
+  </div>
+</div>
+
+<div class="overlay soft" id="galaxy-setup" hidden role="dialog" aria-labelledby="galaxy-setup-title">
+  <div class="card">
+    <h2 id="galaxy-setup-title">Make room for new galaxies</h2>
+    <p>Your own galaxies need three small tables in your Foquito database. This is a one-time step.</p>
+    <ol class="steps">
+      <li><span class="n">1</span><span class="txt">Copy the setup code</span>
+        <button class="btn" id="copy-sql">Copy</button></li>
+      <li><span class="n">2</span><span class="txt">Open your Supabase SQL editor</span>
+        <a class="btn" id="open-sql" target="_blank" rel="noopener">Open</a></li>
+      <li><span class="n">3</span><span class="txt">Paste with ⌘V, then click <strong>Run</strong></span></li>
+    </ol>
+    <div class="err" id="galaxy-setup-err"></div>
+    <button class="btn" id="galaxy-setup-done">I ran it</button>
+    <button class="btn quiet" id="galaxy-setup-close">Not now</button>
   </div>
 </div>
 
 <aside class="panel">
   <nav class="chips" id="chips" aria-label="Gardens"></nav>
 
-  <h2 class="garden-title" id="garden-title"></h2>
+  <input id="garden-name" maxlength="60" aria-label="Garden name" readonly>
   <div class="counts" id="counts"></div>
 
   <form id="add-form">
     <input id="task-input" type="text" maxlength="300" placeholder="What needs tending?" autocomplete="off" aria-label="New task">
-    <button type="submit" id="add-btn">Plant</button>
+    <button type="submit">Plant</button>
   </form>
 
+  <div class="section-label" id="list-label" hidden></div>
   <ul id="list"></ul>
   <div class="empty" id="empty" hidden></div>
 
   <div class="section-label" id="tended-label" hidden>Tended today</div>
   <ul id="tended-list"></ul>
 
+  <div class="actions" id="actions"></div>
   <div class="sync" id="sync"><span class="dot"></span><span id="sync-text">Connecting to Foquito…</span></div>
 </aside>
 
@@ -419,14 +601,56 @@
   // Config is pasted once by the user (their Foquito settings JSON) and kept
   // in this browser's localStorage — never baked into this file.
   const CONFIG_KEY = "oasis-live-config";
+  const CACHE_KEY = "oasis-live-cache-v2";
+  const VIEW_KEY = "oasis-live-view";
+  const POLL_MS = 25000;
+  const FOQUITO = "foquito";
+  const FOCUS_ID = "focus:sessions";
   let SUPABASE_URL = null, SUPABASE_KEY = null, HEADERS = null;
 
+  const SETUP_SQL = `-- Oasis galaxies: user-created worlds of gardens, separate from Foquito's tasks.
+create extension if not exists "pgcrypto";
+
+create table if not exists oasis_galaxies (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  sort_order double precision not null default extract(epoch from now()),
+  created_at timestamptz not null default now()
+);
+
+create table if not exists oasis_gardens (
+  id uuid primary key default gen_random_uuid(),
+  galaxy_id uuid not null references oasis_galaxies(id) on delete cascade,
+  name text not null,
+  sort_order double precision not null default extract(epoch from now()),
+  created_at timestamptz not null default now()
+);
+create index if not exists oasis_gardens_galaxy_idx on oasis_gardens (galaxy_id);
+
+create table if not exists oasis_tasks (
+  id uuid primary key default gen_random_uuid(),
+  garden_id uuid not null references oasis_gardens(id) on delete cascade,
+  title text not null,
+  done boolean not null default false,
+  done_at timestamptz,
+  sort_order double precision not null default extract(epoch from now()),
+  created_at timestamptz not null default now()
+);
+create index if not exists oasis_tasks_garden_idx on oasis_tasks (garden_id);
+
+alter table oasis_galaxies disable row level security;
+alter table oasis_gardens disable row level security;
+alter table oasis_tasks disable row level security;
+
+notify pgrst, 'reload schema';
+`;
+
+  const readJSON = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+  const writeJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } };
+
   function loadConfig() {
-    try {
-      const c = JSON.parse(localStorage.getItem(CONFIG_KEY));
-      if (c && c.supabaseUrl && c.supabaseAnonKey) return c;
-    } catch (e) { /* fall through */ }
-    return null;
+    const c = readJSON(CONFIG_KEY);
+    return c && c.supabaseUrl && c.supabaseAnonKey ? c : null;
   }
   function applyConfig(c) {
     SUPABASE_URL = c.supabaseUrl.replace(/\/+$/, "");
@@ -437,8 +661,6 @@
       "Content-Type": "application/json"
     };
   }
-  const POLL_MS = 25000;
-  const CACHE_KEY = "oasis-live-cache";
 
   const ACRONYM_CASE = { phd: "PhD" };
   const gardenName = cat => cat.split("-")
@@ -449,91 +671,297 @@
   const todayKey = () => new Date().toLocaleDateString("sv");
   const dayOf = iso => iso ? new Date(iso).toLocaleDateString("sv") : null;
   const hash = s => { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
+  const nowEpoch = () => Date.now() / 1000;
+  const uuid = () => (crypto.randomUUID ? crypto.randomUUID()
+    : "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
+        (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16)));
 
-  // ---------- state ----------
-  let rows = [];               // raw Foquito task rows (kind='task')
-  let state = { gardens: [], selected: null };
-  let gardenOrder = null;      // category order fixed on first build
-  let lastSyncAt = null, syncError = null;
+  // ---------- data ----------
+  // Raw rows mirrored from Supabase; views are derived on every render.
+  let data = { tasks: [], sessions: [], galaxies: [], gardens: [], otasks: [] };
+  let galaxiesReady = null;       // null = unknown, false = tables not created yet
+  let foquitoOrder = null;        // category order, fixed on first build
+  let lastSyncAt = null, syncError = null, notice = null;
 
-  function buildState() {
-    const cats = new Map();
-    for (const r of rows) {
-      if (!cats.has(r.category)) cats.set(r.category, []);
-      cats.get(r.category).push(r);
-    }
-    let order = gardenOrder;
-    if (!order) {
-      order = [...cats.keys()].sort((a, b) =>
-        cats.get(b).filter(t => !t.done).length - cats.get(a).filter(t => !t.done).length);
-      gardenOrder = order;
-    } else {
-      for (const c of cats.keys()) if (!order.includes(c)) order.push(c);
-    }
-    const today = todayKey();
-    state.gardens = order.filter(c => cats.has(c)).map((cat, i) => {
-      const ts = cats.get(cat).slice().sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-      return {
-        id: cat,
-        name: gardenName(cat),
-        seed: hash(cat),
-        bloom: BLOOMS[i % BLOOMS.length],
-        plants: ts.filter(t => t.done && dayOf(t.done_at) !== today).length,
-        tasks: ts.filter(t => !t.done || dayOf(t.done_at) === today)
-          .map(t => ({ id: t.id, text: t.title, done: t.done, pending: !!t._pending }))
-      };
-    });
-    if (!state.gardens.find(g => g.id === state.selected)) {
-      state.selected = state.gardens.length ? state.gardens[0].id : null;
-    }
-  }
+  let view = Object.assign({ galaxy: FOQUITO, selected: {} }, readJSON(VIEW_KEY) || {});
+  const saveView = () => writeJSON(VIEW_KEY, view);
 
-  // ---------- sync ----------
-  async function api(path, opts) {
+  // interaction state
+  let armed = null;               // "task:<id>" | "garden:<id>" | "galaxy:<id>"
+  let editingTask = null;         // { id, draft }
+  let editingGalaxy = false;
+  let pendingGardenFocus = false;
+
+  // ---------- api ----------
+  async function api(path, opts = {}) {
     const res = await fetch(SUPABASE_URL + "/rest/v1/" + path, {
       ...opts,
-      headers: { ...HEADERS, ...(opts && opts.headers) }
+      headers: { ...HEADERS, ...(opts.headers || {}) }
     });
-    if (!res.ok) throw new Error("Foquito sync failed (" + res.status + ")");
-    return res.status === 204 ? null : res.json();
+    if (!res.ok) {
+      let body = null;
+      try { body = await res.json(); } catch (e) { /* no body */ }
+      const err = new Error("Foquito sync failed (" + res.status + ")");
+      err.missingTable = res.status === 404 ||
+        !!(body && (body.code === "PGRST205" || body.code === "42P01"));
+      throw err;
+    }
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
   }
 
-  let refreshing = false;
+  let writeSeq = 0, inflight = 0, refreshing = false, refreshQueued = false;
+
   async function refresh() {
-    if (refreshing) return;
+    if (refreshing || inflight > 0) { refreshQueued = true; return; }
     refreshing = true;
+    const seqAtStart = writeSeq;
     try {
-      rows = await api("tasks?select=id,title,category,done,done_at,sort_order,kind&kind=eq.task&order=sort_order.asc&limit=2000");
+      const [t, s, g, gd, ot] = await Promise.allSettled([
+        api("tasks?select=id,title,category,done,done_at,sort_order&kind=eq.task&order=sort_order.desc&limit=5000"),
+        api("pomodoro_sessions?select=id,started_at,ended_at,planned_minutes&kind=eq.work&order=started_at.desc&limit=5000"),
+        api("oasis_galaxies?select=id,name,sort_order&order=sort_order.asc"),
+        api("oasis_gardens?select=id,galaxy_id,name,sort_order&order=sort_order.asc&limit=5000"),
+        api("oasis_tasks?select=id,garden_id,title,done,done_at,sort_order&order=sort_order.asc&limit=10000")
+      ]);
+      // a write landed while we were reading: this snapshot may predate it
+      if (writeSeq !== seqAtStart || inflight > 0) { refreshQueued = true; return; }
+      if (t.status === "rejected") throw t.reason;
+      data.tasks = t.value;
+      if (s.status === "fulfilled") data.sessions = s.value;
+      if (g.status === "fulfilled") {
+        galaxiesReady = true;
+        data.galaxies = g.value;
+        if (gd.status === "fulfilled") data.gardens = gd.value;
+        if (ot.status === "fulfilled") data.otasks = ot.value;
+      } else if (g.reason && g.reason.missingTable) {
+        galaxiesReady = false;
+        data.galaxies = []; data.gardens = []; data.otasks = [];
+      }
       syncError = null;
       lastSyncAt = new Date();
-      try { localStorage.setItem(CACHE_KEY, JSON.stringify(rows)); } catch (e) { /* ignore */ }
-      buildState();
+      writeJSON(CACHE_KEY, { data, galaxiesReady });
       render();
     } catch (e) {
-      syncError = e.message || "offline";
+      syncError = e.message || "Offline";
       renderSync();
     } finally {
       refreshing = false;
+      if (refreshQueued && inflight === 0) { refreshQueued = false; refresh(); }
     }
   }
 
-  async function mutate(fn, rollbackMsg) {
+  async function mutate(fn, failMsg) {
+    writeSeq++;
+    inflight++;
     try {
       await fn();
-      syncError = null;
-      lastSyncAt = new Date();
     } catch (e) {
-      syncError = (rollbackMsg || "Change didn't save") + " — retrying sync";
+      notice = { text: failMsg + " — showing what Foquito has", until: Date.now() + 6000 };
+      setTimeout(renderSync, 6100);
+    } finally {
+      inflight--;
     }
     refresh();
   }
 
+  // ---------- derived views ----------
+  function galaxyList() {
+    const list = [{ id: FOQUITO, name: "Foquito", custom: false }];
+    for (const g of data.galaxies) list.push({ id: g.id, name: g.name, custom: true });
+    return list;
+  }
+  function currentGalaxy() {
+    const list = galaxyList();
+    return list.find(g => g.id === view.galaxy) || list[0];
+  }
+
+  function foquitoGardens() {
+    const cats = new Map();
+    for (const r of data.tasks) {
+      if (!cats.has(r.category)) cats.set(r.category, []);
+      cats.get(r.category).push(r);
+    }
+    if (!foquitoOrder && cats.size) {
+      foquitoOrder = [...cats.keys()].sort((a, b) =>
+        cats.get(b).filter(t => !t.done).length - cats.get(a).filter(t => !t.done).length);
+    } else if (foquitoOrder) {
+      for (const c of cats.keys()) if (!foquitoOrder.includes(c)) foquitoOrder.push(c);
+    }
+    const today = todayKey();
+    const gardens = (foquitoOrder || []).filter(c => cats.has(c)).map((cat, i) => {
+      const ts = cats.get(cat).slice().sort((a, b) => (b.sort_order || 0) - (a.sort_order || 0));
+      return {
+        id: "cat:" + cat, kind: "category", category: cat,
+        name: gardenName(cat), seed: hash(cat), bloom: BLOOMS[i % BLOOMS.length],
+        plants: ts.filter(t => t.done && dayOf(t.done_at) !== today).length,
+        tasks: ts.filter(t => !t.done || dayOf(t.done_at) === today)
+          .map(t => ({ id: t.id, text: t.title, done: t.done }))
+      };
+    });
+    if (data.sessions.length) {
+      gardens.push({
+        id: FOCUS_ID, kind: "focus", name: "Focus", seed: hash("focus-sessions"),
+        bloom: BLOOMS[gardens.length % BLOOMS.length],
+        plants: data.sessions.length, tasks: [], sessions: data.sessions
+      });
+    }
+    return gardens;
+  }
+
+  function customGardens(galaxyId) {
+    const today = todayKey();
+    return data.gardens
+      .filter(g => g.galaxy_id === galaxyId)
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((g, i) => {
+        const ts = data.otasks.filter(t => t.garden_id === g.id).sort((a, b) => a.sort_order - b.sort_order);
+        return {
+          id: g.id, kind: "custom", name: g.name, seed: hash(g.id),
+          bloom: BLOOMS[i % BLOOMS.length],
+          plants: ts.filter(t => t.done && dayOf(t.done_at) !== today).length,
+          tasks: ts.filter(t => !t.done || dayOf(t.done_at) === today)
+            .map(t => ({ id: t.id, text: t.title, done: t.done }))
+        };
+      });
+  }
+
+  const gardensFor = galaxy => galaxy.custom ? customGardens(galaxy.id) : foquitoGardens();
+  const grownCount = g => g.plants + g.tasks.filter(t => t.done).length;
+
+  // ---------- task operations (same shape for both galaxies) ----------
+  function taskTable(garden) { return garden.kind === "custom" ? "oasis_tasks" : "tasks"; }
+  function taskRowFor(garden, id) {
+    return (garden.kind === "custom" ? data.otasks : data.tasks).find(r => r.id === id);
+  }
+
+  function toggleTask(garden, t) {
+    armed = null;
+    const row = taskRowFor(garden, t.id);
+    if (!row) return;
+    row.done = !row.done;
+    row.done_at = row.done ? new Date().toISOString() : null;
+    if (row.done) scene.celebrate(garden.id);
+    const patch = { done: row.done, done_at: row.done_at };
+    render();
+    mutate(() => api(taskTable(garden) + "?id=eq." + t.id,
+      { method: "PATCH", body: JSON.stringify(patch) }), "Check-off didn't save");
+  }
+
+  function renameTask(garden, id, text) {
+    const row = taskRowFor(garden, id);
+    if (!row || !text || row.title === text) return;
+    row.title = text;
+    mutate(() => api(taskTable(garden) + "?id=eq." + id,
+      { method: "PATCH", body: JSON.stringify({ title: text }) }), "Rename didn't save");
+  }
+
+  function deleteTask(garden, id) {
+    if (garden.kind === "custom") data.otasks = data.otasks.filter(r => r.id !== id);
+    else data.tasks = data.tasks.filter(r => r.id !== id);
+    render();
+    mutate(() => api(taskTable(garden) + "?id=eq." + id, { method: "DELETE" }), "Delete didn't save");
+  }
+
+  function addTask(garden, text) {
+    const id = uuid();
+    if (garden.kind === "custom") {
+      data.otasks.push({ id, garden_id: garden.id, title: text, done: false, done_at: null, sort_order: nowEpoch() });
+      render();
+      mutate(() => api("oasis_tasks", {
+        method: "POST", headers: { "Prefer": "return=minimal" },
+        body: JSON.stringify({ id, garden_id: garden.id, title: text, done: false })
+      }), "New task didn't save");
+    } else {
+      // Foquito lists by sort_order descending and new rows default to now: they land on top
+      data.tasks.push({ id, title: text, category: garden.category, done: false, done_at: null, sort_order: nowEpoch() });
+      render();
+      mutate(() => api("tasks", {
+        method: "POST", headers: { "Prefer": "return=minimal" },
+        body: JSON.stringify({ id, title: text, category: garden.category, kind: "task", source: "manual", done: false })
+      }), "New task didn't save");
+    }
+  }
+
+  // ---------- garden + galaxy operations ----------
+  function addGarden(galaxy) {
+    const id = uuid();
+    const count = data.gardens.filter(g => g.galaxy_id === galaxy.id).length;
+    const name = "Garden " + (count + 1);
+    data.gardens.push({ id, galaxy_id: galaxy.id, name, sort_order: nowEpoch() });
+    view.selected[galaxy.id] = id;
+    saveView();
+    pendingGardenFocus = true;
+    render();
+    mutate(() => api("oasis_gardens", {
+      method: "POST", headers: { "Prefer": "return=minimal" },
+      body: JSON.stringify({ id, galaxy_id: galaxy.id, name })
+    }), "New garden didn't save");
+  }
+
+  function renameGarden(id, name) {
+    const row = data.gardens.find(g => g.id === id);
+    if (!row || !name || row.name === name) return;
+    row.name = name;
+    mutate(() => api("oasis_gardens?id=eq." + id,
+      { method: "PATCH", body: JSON.stringify({ name }) }), "Garden rename didn't save");
+  }
+
+  function deleteGarden(id) {
+    data.gardens = data.gardens.filter(g => g.id !== id);
+    data.otasks = data.otasks.filter(t => t.garden_id !== id);
+    render();
+    mutate(() => api("oasis_gardens?id=eq." + id, { method: "DELETE" }), "Garden removal didn't save");
+  }
+
+  function addGalaxy() {
+    if (galaxiesReady === false) { openGalaxySetup(); return; }
+    if (galaxiesReady === null) return;
+    const id = uuid();
+    const name = "New galaxy";
+    data.galaxies.push({ id, name, sort_order: nowEpoch() });
+    switchGalaxy(id);
+    editingGalaxy = true;
+    render();
+    mutate(() => api("oasis_galaxies", {
+      method: "POST", headers: { "Prefer": "return=minimal" },
+      body: JSON.stringify({ id, name })
+    }), "New galaxy didn't save");
+  }
+
+  function renameGalaxy(id, name) {
+    const row = data.galaxies.find(g => g.id === id);
+    if (!row || !name || row.name === name) return;
+    row.name = name;
+    mutate(() => api("oasis_galaxies?id=eq." + id,
+      { method: "PATCH", body: JSON.stringify({ name }) }), "Galaxy rename didn't save");
+  }
+
+  function deleteGalaxy(id) {
+    const gardenIds = new Set(data.gardens.filter(g => g.galaxy_id === id).map(g => g.id));
+    data.galaxies = data.galaxies.filter(g => g.id !== id);
+    data.gardens = data.gardens.filter(g => g.galaxy_id !== id);
+    data.otasks = data.otasks.filter(t => !gardenIds.has(t.garden_id));
+    switchGalaxy(FOQUITO);
+    mutate(() => api("oasis_galaxies?id=eq." + id, { method: "DELETE" }), "Galaxy removal didn't save");
+  }
+
+  function switchGalaxy(id) {
+    if (view.galaxy === id) return;
+    view.galaxy = id;
+    armed = null;
+    editingTask = null;
+    editingGalaxy = false;
+    saveView();
+    render();
+  }
+
   // ---------- dom ----------
   const $ = id => document.getElementById(id);
-  const chipsEl = $("chips"), listEl = $("list"), tendedEl = $("tended-list"),
-        tendedLabel = $("tended-label"), emptyEl = $("empty"), countsEl = $("counts"),
-        titleEl = $("garden-title"), form = $("add-form"), input = $("task-input"),
-        addBtn = $("add-btn"), syncEl = $("sync"), syncText = $("sync-text");
+  const galaxiesEl = $("galaxies"), chipsEl = $("chips"), listEl = $("list"), listLabel = $("list-label"),
+        tendedEl = $("tended-list"), tendedLabel = $("tended-label"), emptyEl = $("empty"),
+        countsEl = $("counts"), nameEl = $("garden-name"), form = $("add-form"), input = $("task-input"),
+        actionsEl = $("actions"), syncEl = $("sync"), syncText = $("sync-text");
 
   $("date").textContent = new Date().toLocaleDateString(undefined,
     { weekday: "long", month: "long", day: "numeric" });
@@ -542,80 +970,140 @@
     '<path d="M2 6.5 L5 9.5 L10 3" stroke="#FDFDFB" stroke-width="2" ' +
     'stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
-  const current = () => state.gardens.find(g => g.id === state.selected);
-  const grownCount = g => g.plants + g.tasks.filter(t => t.done).length;
+  function currentGarden(gardens, galaxy) {
+    let g = gardens.find(x => x.id === view.selected[galaxy.id]);
+    if (!g && gardens.length) { g = gardens[0]; view.selected[galaxy.id] = g.id; }
+    return g || null;
+  }
 
-  let armedRemove = null; // task id whose × was clicked once
-
-  function taskRow(g, t) {
+  function taskRow(garden, t) {
     const li = document.createElement("li");
-    li.className = (t.done ? "done" : "") + (t.pending ? " pending" : "");
+    li.className = t.done ? "done" : "";
 
     const check = document.createElement("button");
     check.className = "check";
     check.innerHTML = CHECK_SVG;
     check.setAttribute("aria-label", (t.done ? "Mark not done: " : "Mark done: ") + t.text);
     check.setAttribute("aria-pressed", String(t.done));
-    check.addEventListener("click", () => toggleTask(g, t));
+    check.addEventListener("click", () => toggleTask(garden, t));
+    li.append(check);
 
-    const label = document.createElement("span");
-    label.className = "label";
-    label.textContent = t.text;
+    if (editingTask && editingTask.id === t.id) {
+      const edit = document.createElement("input");
+      edit.className = "edit-input";
+      edit.value = editingTask.draft;
+      edit.maxLength = 300;
+      edit.setAttribute("aria-label", "Edit task");
+      edit.dataset.editing = t.id;
+      const commit = () => {
+        if (!editingTask || editingTask.id !== t.id) return;
+        const text = edit.value.trim();
+        editingTask = null;
+        renameTask(garden, t.id, text);
+        render();
+      };
+      edit.addEventListener("input", () => { if (editingTask) editingTask.draft = edit.value; });
+      edit.addEventListener("keydown", e => {
+        if (e.key === "Enter") { e.preventDefault(); commit(); }
+        else if (e.key === "Escape") { editingTask = null; render(); }
+      });
+      edit.addEventListener("blur", commit);
+      li.append(edit);
+    } else {
+      const label = document.createElement("span");
+      label.className = "label";
+      label.textContent = t.text;
+      label.tabIndex = 0;
+      label.title = "Click to edit";
+      const startEdit = () => { armed = null; editingTask = { id: t.id, draft: t.text }; render(); };
+      label.addEventListener("click", startEdit);
+      label.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); startEdit(); } });
+      li.append(label);
+    }
 
+    const key = "task:" + t.id;
     const rm = document.createElement("button");
-    rm.className = "remove" + (armedRemove === t.id ? " armed" : "");
-    rm.textContent = armedRemove === t.id ? "delete?" : "×";
-    rm.setAttribute("aria-label", (armedRemove === t.id ? "Confirm delete: " : "Delete from Foquito: ") + t.text);
+    rm.className = "remove" + (armed === key ? " armed" : "");
+    rm.textContent = armed === key ? "delete?" : "×";
+    rm.setAttribute("aria-label", (armed === key ? "Confirm delete: " : "Delete: ") + t.text);
     rm.addEventListener("click", () => {
-      if (armedRemove !== t.id) { armedRemove = t.id; render(); return; }
-      armedRemove = null;
-      const row = rows.find(r => r.id === t.id);
-      if (row) row._pending = true;
-      buildState(); render();
-      mutate(() => api("tasks?id=eq." + t.id, { method: "DELETE" }), "Delete didn't reach Foquito");
+      if (armed !== key) { armed = key; render(); return; }
+      armed = null;
+      deleteTask(garden, t.id);
     });
-
-    li.append(check, label, rm);
+    li.append(rm);
     return li;
   }
 
-  function toggleTask(g, t) {
-    armedRemove = null;
-    const row = rows.find(r => r.id === t.id);
-    if (!row) return;
-    const marking = !row.done;
-    row.done = marking;
-    row.done_at = marking ? new Date().toISOString() : null;
-    row._pending = true;
-    if (marking) scene.celebrate(g.id);
-    buildState(); render();
-    mutate(() => api("tasks?id=eq." + t.id, {
-      method: "PATCH",
-      body: JSON.stringify({ done: marking, done_at: row.done_at })
-    }), "Check-off didn't reach Foquito");
+  function sessionRow(s) {
+    const li = document.createElement("li");
+    li.className = "session";
+    const when = document.createElement("span");
+    when.textContent = new Date(s.started_at).toLocaleDateString(undefined,
+      { weekday: "short", month: "short", day: "numeric" }) + " · " +
+      new Date(s.started_at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+    const mins = document.createElement("span");
+    mins.className = "mins";
+    mins.textContent = s.planned_minutes + " min";
+    li.append(when, mins);
+    return li;
   }
 
-  form.addEventListener("submit", e => {
-    e.preventDefault();
-    const text = input.value.trim();
-    const g = current();
-    if (!text || !g) return;
-    input.value = "";
-    const maxSort = Math.max(0, ...rows.filter(r => r.category === g.id).map(r => r.sort_order || 0));
-    const temp = { id: "tmp-" + Date.now(), title: text, category: g.id, done: false,
-                   done_at: null, sort_order: maxSort + 1, _pending: true };
-    rows.push(temp);
-    buildState(); render();
-    mutate(() => api("tasks", {
-      method: "POST",
-      headers: { "Prefer": "return=minimal" },
-      body: JSON.stringify({ title: text, category: g.id, kind: "task", source: "manual",
-                             done: false, sort_order: maxSort + 1 })
-    }), "New task didn't reach Foquito");
-  });
+  function actionButton(label, onClick, cls) {
+    const b = document.createElement("button");
+    b.textContent = label;
+    if (cls) b.className = cls;
+    b.addEventListener("click", onClick);
+    return b;
+  }
+
+  function renderGalaxies(galaxy) {
+    galaxiesEl.textContent = "";
+    for (const gx of galaxyList()) {
+      if (gx.id === galaxy.id && gx.custom && editingGalaxy) {
+        const inp = document.createElement("input");
+        inp.className = "galaxy-input";
+        inp.value = gx.name;
+        inp.maxLength = 40;
+        inp.setAttribute("aria-label", "Galaxy name");
+        inp.dataset.galaxyEditing = "1";
+        const commit = () => {
+          if (!editingGalaxy) return;
+          editingGalaxy = false;
+          renameGalaxy(gx.id, inp.value.trim());
+          render();
+        };
+        inp.addEventListener("keydown", e => {
+          if (e.key === "Enter") { e.preventDefault(); commit(); }
+          else if (e.key === "Escape") { editingGalaxy = false; render(); }
+        });
+        inp.addEventListener("blur", commit);
+        galaxiesEl.append(inp);
+        continue;
+      }
+      const b = document.createElement("button");
+      b.className = "galaxy";
+      b.textContent = gx.name || "Unnamed";
+      b.setAttribute("aria-pressed", String(gx.id === galaxy.id));
+      if (gx.custom) b.title = "Double-click to rename";
+      b.addEventListener("click", () => switchGalaxy(gx.id));
+      if (gx.custom) b.addEventListener("dblclick", () => { switchGalaxy(gx.id); editingGalaxy = true; render(); });
+      galaxiesEl.append(b);
+    }
+    if (galaxiesReady !== null) {
+      const add = document.createElement("button");
+      add.className = "galaxy new";
+      add.textContent = "+ New galaxy";
+      add.addEventListener("click", addGalaxy);
+      galaxiesEl.append(add);
+    }
+  }
 
   function renderSync() {
-    if (syncError) {
+    if (notice && Date.now() < notice.until) {
+      syncEl.className = "sync err";
+      syncText.textContent = notice.text;
+    } else if (syncError) {
       syncEl.className = "sync err";
       syncText.textContent = syncError;
     } else if (lastSyncAt) {
@@ -629,61 +1117,183 @@
   }
 
   function render() {
-    const g = current();
+    const galaxy = currentGalaxy();
+    if (galaxy.id !== view.galaxy) { view.galaxy = galaxy.id; saveView(); }
+    const gardens = gardensFor(galaxy);
+    const garden = currentGarden(gardens, galaxy);
 
+    // don't rebuild the galaxy bar out from under an active rename
+    if (!(editingGalaxy && document.activeElement && document.activeElement.dataset.galaxyEditing)) {
+      renderGalaxies(galaxy);
+      const gi = galaxiesEl.querySelector(".galaxy-input");
+      if (gi) { gi.focus(); gi.select(); }
+    }
+
+    // chips
     chipsEl.textContent = "";
-    for (const gd of state.gardens) {
+    for (const gd of gardens) {
       const b = document.createElement("button");
       b.className = "chip";
-      b.setAttribute("aria-pressed", String(gd.id === state.selected));
+      b.setAttribute("aria-pressed", String(garden && gd.id === garden.id));
       b.style.setProperty("--dot", "var(" + gd.bloom + ")");
       b.innerHTML = '<span class="dot"></span>';
-      b.append(gd.name);
-      b.addEventListener("click", () => { state.selected = gd.id; armedRemove = null; render(); });
+      b.append(gd.name || "Unnamed");
+      b.addEventListener("click", () => {
+        view.selected[galaxy.id] = gd.id; armed = null; editingTask = null; saveView(); render();
+      });
       chipsEl.append(b);
     }
+    if (galaxy.custom) {
+      const b = document.createElement("button");
+      b.className = "chip new";
+      b.textContent = "+ New garden";
+      b.addEventListener("click", () => addGarden(galaxy));
+      chipsEl.append(b);
+    }
+    chipsEl.hidden = !gardens.length && !galaxy.custom;
 
-    if (!g) {
-      titleEl.textContent = "";
+    // garden title
+    const editableName = !!(garden && garden.kind === "custom");
+    nameEl.readOnly = !editableName;
+    if (document.activeElement !== nameEl) {
+      nameEl.value = garden ? garden.name : (galaxy.custom ? galaxy.name : "Foquito");
+    }
+    nameEl.title = editableName ? "Click to rename" : "";
+    if (pendingGardenFocus && editableName) {
+      pendingGardenFocus = false;
+      nameEl.focus({ preventScroll: true });
+      nameEl.select();
+    }
+
+    const editingNow = editingTask && document.activeElement && document.activeElement.dataset.editing;
+    form.hidden = !garden || garden.kind === "focus";
+
+    if (!garden) {
       countsEl.textContent = "";
+      listEl.textContent = ""; tendedEl.textContent = "";
+      listLabel.hidden = true; tendedLabel.hidden = true;
+      emptyEl.hidden = false;
+      emptyEl.textContent = galaxy.custom
+        ? "An empty galaxy. Start a garden with + New garden."
+        : (lastSyncAt ? "No tasks in Foquito yet." : "Waiting for Foquito…");
+    } else if (garden.kind === "focus") {
+      const minutes = garden.sessions.reduce((sum, s) => sum + (s.planned_minutes || 0), 0);
+      const hours = Math.round(minutes / 6) / 10;
+      const today = garden.sessions.filter(s => dayOf(s.started_at) === todayKey()).length;
+      countsEl.innerHTML = '<span class="grown">' + garden.sessions.length + " sessions</span> · " +
+        hours + " hours focused · " + today + " today";
+      listLabel.hidden = false;
+      listLabel.textContent = "Recent sessions";
       listEl.textContent = "";
+      for (const s of garden.sessions.slice(0, 12)) listEl.append(sessionRow(s));
       tendedEl.textContent = "";
       tendedLabel.hidden = true;
-      emptyEl.hidden = false;
-      emptyEl.textContent = "Waiting for Foquito…";
-      renderSync();
-      scene.update(state);
-      return;
+      emptyEl.hidden = true;
+    } else if (!editingNow) {
+      const open = garden.tasks.filter(t => !t.done);
+      const doneToday = garden.tasks.filter(t => t.done);
+      listLabel.hidden = true;
+      listEl.textContent = "";
+      for (const t of open) listEl.append(taskRow(garden, t));
+      tendedEl.textContent = "";
+      for (const t of doneToday) tendedEl.append(taskRow(garden, t));
+      tendedLabel.hidden = doneToday.length === 0;
+      emptyEl.hidden = open.length > 0;
+      if (open.length === 0) {
+        emptyEl.textContent = grownCount(garden) > 0
+          ? "All tended. The garden grows."
+          : "Bare soil. Plant your first task.";
+      }
+      const grown = grownCount(garden);
+      countsEl.innerHTML = grown
+        ? '<span class="grown">' + grown + (grown === 1 ? " plant" : " plants") + "</span> growing · "
+          + doneToday.length + " tended today"
+        : "Nothing planted yet";
+      const ed = document.querySelector(".edit-input");
+      if (ed) { ed.focus({ preventScroll: true }); ed.setSelectionRange(ed.value.length, ed.value.length); }
     }
 
-    titleEl.textContent = g.name;
-
-    const open = g.tasks.filter(t => !t.done);
-    const doneToday = g.tasks.filter(t => t.done);
-
-    listEl.textContent = "";
-    for (const t of open) listEl.append(taskRow(g, t));
-
-    tendedEl.textContent = "";
-    for (const t of doneToday) tendedEl.append(taskRow(g, t));
-    tendedLabel.hidden = doneToday.length === 0;
-
-    emptyEl.hidden = open.length > 0;
-    if (open.length === 0) {
-      emptyEl.textContent = grownCount(g) > 0
-        ? "All tended. The garden grows."
-        : "Bare soil. Plant your first task.";
+    // actions
+    actionsEl.textContent = "";
+    if (garden && garden.kind === "custom") {
+      const key = "garden:" + garden.id;
+      actionsEl.append(actionButton(armed === key ? "Click again to remove this garden" : "Remove garden", () => {
+        if (armed !== key) { armed = key; render(); return; }
+        armed = null;
+        deleteGarden(garden.id);
+      }, "danger" + (armed === key ? " armed" : "")));
     }
-
-    const grown = grownCount(g);
-    countsEl.innerHTML = grown
-      ? '<span class="grown">' + grown + (grown === 1 ? " plant" : " plants") + "</span> growing · "
-        + doneToday.length + " tended today"
-      : "Nothing planted yet";
+    if (galaxy.custom) {
+      actionsEl.append(actionButton("Rename galaxy", () => { editingGalaxy = true; render(); }));
+      const key = "galaxy:" + galaxy.id;
+      actionsEl.append(actionButton(armed === key ? "Click again to remove this galaxy" : "Remove galaxy", () => {
+        if (armed !== key) { armed = key; render(); return; }
+        armed = null;
+        deleteGalaxy(galaxy.id);
+      }, "danger" + (armed === key ? " armed" : "")));
+    }
 
     renderSync();
-    scene.update(state);
+    scene.update(gardens, garden ? garden.id : null, galaxy.id);
   }
+
+  nameEl.addEventListener("keydown", e => { if (e.key === "Enter") nameEl.blur(); });
+  nameEl.addEventListener("change", () => {
+    const galaxy = currentGalaxy();
+    const garden = currentGarden(gardensFor(galaxy), galaxy);
+    if (garden && garden.kind === "custom") renameGarden(garden.id, nameEl.value.trim());
+    render();
+  });
+
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    const text = input.value.trim();
+    const galaxy = currentGalaxy();
+    const garden = currentGarden(gardensFor(galaxy), galaxy);
+    if (!text || !garden || garden.kind === "focus") return;
+    input.value = "";
+    addTask(garden, text);
+  });
+
+  // ---------- galaxy setup card ----------
+  const galaxySetup = $("galaxy-setup");
+  function openGalaxySetup() {
+    try {
+      const ref = new URL(SUPABASE_URL).hostname.split(".")[0];
+      $("open-sql").href = "https://supabase.com/dashboard/project/" + ref + "/sql/new";
+    } catch (e) {
+      $("open-sql").href = "https://supabase.com/dashboard";
+    }
+    $("galaxy-setup-err").textContent = "";
+    galaxySetup.hidden = false;
+    $("copy-sql").focus();
+  }
+  $("copy-sql").addEventListener("click", async () => {
+    const btn = $("copy-sql");
+    try {
+      await navigator.clipboard.writeText(SETUP_SQL);
+      btn.textContent = "Copied";
+    } catch (e) {
+      $("galaxy-setup-err").textContent = "Couldn't copy automatically — your browser blocked the clipboard.";
+    }
+  });
+  $("galaxy-setup-close").addEventListener("click", () => { galaxySetup.hidden = true; });
+  $("galaxy-setup-done").addEventListener("click", async () => {
+    const err = $("galaxy-setup-err");
+    err.textContent = "Checking…";
+    try {
+      await api("oasis_galaxies?select=id&limit=1");
+      galaxiesReady = true;
+      galaxySetup.hidden = true;
+      err.textContent = "";
+      await refresh();
+      addGalaxy();
+    } catch (e) {
+      err.textContent = e.missingTable
+        ? "The galaxy tables aren't there yet. Make sure the code ran in Supabase without a red error, then try again."
+        : "Couldn't reach Foquito — check your connection and try again.";
+    }
+  });
 
   // ---------- the floating world ----------
   const scene = (() => {
@@ -695,6 +1305,7 @@
     const RIM_H = 16;
     const TIP_D = 34;
     const MAX_PLANTS = 14;
+    const WARP_MS = 1100;
 
     let colors = {}, rgbCache = {};
     let islands = [];
@@ -702,11 +1313,10 @@
     let rings = [];
     let dust = [];
     let cssW = 0, cssH = 0, dpr = 1;
+    let galaxyId = null, warpStart = -Infinity, warpOffset = 0;
 
     const cam = { theta: 0.7, phi: 0.46, radius: 470, fov: 640 };
-    let camFitted = false;
     let dragging = false, dragMoved = 0, lastX = 0, lastY = 0;
-    let autoDrift = true;
 
     const TOKENS = ["--soil-top", "--soil-light", "--soil-dark", "--leaf", "--leaf-2",
                     "--ink", "--ink-soft", "--ink-faint", "--dust", "--accent",
@@ -731,10 +1341,6 @@
 
     readColors();
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => setTimeout(readColors, 40));
-    setInterval(() => {
-      const v = getComputedStyle(document.documentElement).getPropertyValue("--soil-top").trim();
-      if (v && v !== colors["--soil-top"]) readColors();
-    }, 400);
 
     function resize() {
       cssW = window.innerWidth;
@@ -765,10 +1371,24 @@
       const z1 = x * st + z * ct;
       const y2 = y * cp - z1 * sp;
       const z2 = y * sp + z1 * cp;
-      const depth = cam.radius - z2;
+      const depth = cam.radius + warpOffset - z2;
       if (depth < 60) return null;
       const s = cam.fov / depth;
       return [centerX() + x1 * s, centerY() - y2 * s, depth, s];
+    }
+
+    function seedDust(key) {
+      const rnd = mulberry32(hash("dust:" + key));
+      dust = [];
+      for (let i = 0; i < 70; i++) {
+        dust.push({
+          x: (rnd() * 2 - 1) * 340,
+          y: (rnd() * 2 - 1) * 200,
+          z: (rnd() * 2 - 1) * 340,
+          drift: 2 + rnd() * 6,
+          phase: rnd() * Math.PI * 2
+        });
+      }
     }
 
     function layoutIslands() {
@@ -780,23 +1400,20 @@
         } else {
           const ang = (i / n) * Math.PI * 2 + 0.5;
           const rr = 118 + n * 16 + rnd() * 30;
-          isl.base = {
-            x: Math.cos(ang) * rr,
-            y: (rnd() * 2 - 1) * 34,
-            z: Math.sin(ang) * rr
-          };
+          isl.base = { x: Math.cos(ang) * rr, y: (rnd() * 2 - 1) * 34, z: Math.sin(ang) * rr };
         }
         isl.phase = rnd() * Math.PI * 2;
       });
     }
 
-    function update(st) {
+    function update(gardens, selectedId, nextGalaxyId) {
+      const galaxyChanged = nextGalaxyId !== galaxyId;
       const keepLift = {};
-      for (const isl of islands) keepLift[isl.id] = isl.lift;
-      islands = st.gardens.map(g => ({
+      if (!galaxyChanged) for (const isl of islands) keepLift[isl.id] = isl.lift;
+      islands = gardens.map(g => ({
         id: g.id, name: g.name, seed: g.seed, bloom: g.bloom,
         count: g.plants + g.tasks.filter(t => t.done).length,
-        selected: g.id === st.selected,
+        selected: g.id === selectedId,
         lift: keepLift[g.id] || 0
       }));
       for (const isl of islands) {
@@ -808,29 +1425,25 @@
         prevCounts[isl.id] = isl.count;
       }
       layoutIslands();
-      if (!camFitted && islands.length) {
-        cam.radius = Math.min(760, Math.max(470, 340 + islands.length * 52));
-        camFitted = true;
+      if (galaxyChanged) {
+        const firstLoad = galaxyId === null;
+        galaxyId = nextGalaxyId;
+        seedDust(galaxyId);
+        if (!firstLoad) warpStart = performance.now();
       }
+      if (galaxyChanged || fitCountFor !== islands.length) fitCamera();
       if (reduced.matches) draw(performance.now());
+    }
+
+    let fitCountFor = -1;
+    function fitCamera() {
+      fitCountFor = islands.length;
+      cam.radius = islands.length ? Math.min(760, Math.max(470, 340 + islands.length * 52)) : 470;
     }
 
     function celebrate(id) {
       rings.push({ islandId: id, r: 10, alpha: 0.6 });
     }
-
-    (function initDust() {
-      const rnd = mulberry32(0xA11CE);
-      for (let i = 0; i < 70; i++) {
-        dust.push({
-          x: (rnd() * 2 - 1) * 340,
-          y: (rnd() * 2 - 1) * 200,
-          z: (rnd() * 2 - 1) * 340,
-          drift: 2 + rnd() * 6,
-          phase: rnd() * Math.PI * 2
-        });
-      }
-    })();
 
     const LIGHT = (() => {
       const l = [0.45, 0.75, 0.3];
@@ -844,7 +1457,7 @@
       return isl.base.y + bob + isl.lift;
     }
 
-    function islandItems(isl, t, items) {
+    function islandItems(isl, t, items, fade) {
       const { x: bx, z: bz } = isl.base;
       const by = islandY(isl, t);
 
@@ -856,6 +1469,7 @@
       const lightRGB = rgb("--soil-light");
       const darkRGB = rgb("--soil-dark");
       const topRGB = rgb("--soil-top");
+      const baseAlpha = (isl.selected ? 1 : 0.88) * fade;
 
       const faces = [];
       faces.push({ pts: T, normal: [0, 1, 0], kind: "top" });
@@ -882,7 +1496,7 @@
           const base = mix(darkRGB, lightRGB, 0.25 + 0.75 * b);
           fill = css(f.kind === "taper" ? mix(base, darkRGB, 0.35) : base, 1);
         }
-        items.push({ depth, alpha: isl.selected ? 1 : 0.88, draw: c => {
+        items.push({ depth, alpha: baseAlpha, draw: c => {
           c.fillStyle = fill;
           c.beginPath();
           c.moveTo(proj[0][0], proj[0][1]);
@@ -896,7 +1510,7 @@
         const proj = T.map(p => project(p[0], p[1] + 0.6, p[2]));
         if (!proj.some(p => !p)) {
           const depth = proj.reduce((s, p) => s + p[2], 0) / proj.length - 2;
-          items.push({ depth, alpha: 1, draw: c => {
+          items.push({ depth, alpha: fade, draw: c => {
             c.strokeStyle = colors["--accent"];
             c.lineWidth = 1.4;
             c.globalAlpha *= 0.8;
@@ -931,19 +1545,19 @@
         const sway = reduced.matches ? 0 : Math.sin(t / 900 + phase) * 1.6;
         const scale = p[3];
         const plantDepth = topAvg === null ? p[2] - 1 : topAvg - 1 + (p[2] - topAvg) * 0.001;
-        items.push({ depth: plantDepth, alpha: isl.selected ? 1 : 0.88, draw: c => {
+        items.push({ depth: plantDepth, alpha: baseAlpha, draw: c => {
           drawPlant(c, sp, p[0], p[1], hh * grow * scale, sway * scale, scale, colors[isl.bloom], grow);
         }});
       }
 
       const lp = project(bx, by + 46, bz);
       if (lp) {
-        const fade = Math.max(0.35, Math.min(1, (700 - lp[2]) / 320));
-        items.push({ depth: lp[2] - 2, alpha: 1, draw: c => {
+        const labelFade = Math.max(0.35, Math.min(1, (700 - lp[2]) / 320));
+        items.push({ depth: lp[2] - 2, alpha: fade, draw: c => {
           c.font = "600 " + Math.min(14, Math.max(10, 12 * lp[3])).toFixed(1) + "px Mulish, sans-serif";
           c.textAlign = "center";
           c.fillStyle = colors[isl.selected ? "--ink" : "--ink-faint"];
-          c.globalAlpha *= fade;
+          c.globalAlpha *= labelFade;
           c.fillText(isl.name || "Unnamed", lp[0], lp[1]);
         }});
       }
@@ -1026,7 +1640,18 @@
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, cssW, cssH);
 
-      if (autoDrift && !dragging && !reduced.matches) cam.theta += 0.00045;
+      // arriving in a galaxy: fly in from far away and fade up
+      let fade = 1;
+      if (!reduced.matches && now - warpStart < WARP_MS) {
+        const p = Math.max(0, (now - warpStart) / WARP_MS);
+        const e = 1 - Math.pow(1 - p, 3);
+        warpOffset = (1 - e) * 620;
+        fade = e;
+      } else {
+        warpOffset = 0;
+      }
+
+      if (!dragging && !reduced.matches) cam.theta += 0.00045;
 
       for (const isl of islands) {
         const target = isl.selected ? 16 : 0;
@@ -1048,7 +1673,7 @@
         }});
       }
 
-      for (const isl of islands) islandItems(isl, now, items);
+      for (const isl of islands) islandItems(isl, now, items, fade);
 
       for (const r of rings) {
         const isl = islands.find(i => i.id === r.islandId);
@@ -1142,9 +1767,11 @@
           if (!best || depth < best.depth) best = { id: isl.id, depth };
         }
       }
-      if (best && best.id !== state.selected) {
-        state.selected = best.id;
-        armedRemove = null;
+      if (best) {
+        view.selected[view.galaxy] = best.id;
+        armed = null;
+        editingTask = null;
+        saveView();
         render();
       }
     }
@@ -1161,16 +1788,16 @@
 
   // ---------- boot ----------
   function start() {
-    try {
-      const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
-      if (Array.isArray(cached)) { rows = cached; buildState(); }
-    } catch (e) { /* no cache */ }
+    const cached = readJSON(CACHE_KEY);
+    if (cached && cached.data) {
+      data = Object.assign(data, cached.data);
+      galaxiesReady = cached.galaxiesReady === undefined ? null : cached.galaxiesReady;
+    }
     render();
     refresh();
     setInterval(refresh, POLL_MS);
     window.addEventListener("focus", refresh);
     document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
-    input.focus({ preventScroll: true });
   }
 
   const setupEl = $("setup");
@@ -1201,10 +1828,7 @@
         errEl.textContent = "Couldn't reach Foquito with those settings — check and try again.";
         return;
       }
-      try {
-        localStorage.setItem(CONFIG_KEY, JSON.stringify(
-          { supabaseUrl: cfg.supabaseUrl, supabaseAnonKey: cfg.supabaseAnonKey }));
-      } catch (e) { /* storage unavailable — session-only */ }
+      writeJSON(CONFIG_KEY, { supabaseUrl: cfg.supabaseUrl, supabaseAnonKey: cfg.supabaseAnonKey });
       setupEl.hidden = true;
       start();
     });
