@@ -1,0 +1,1215 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oasis · Foquito</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Mulish:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+<style>
+  :root {
+    --ground: #FDFDFB;
+    --ink: #23291F;
+    --ink-soft: #6B7264;
+    --ink-faint: #A3A99A;
+    --line: #E5E5DC;
+    --accent: #2F6B5E;
+    --panel: rgba(253, 253, 251, 0.78);
+    --soil-top: #E4D7BD;
+    --soil-light: #D2C09A;
+    --soil-dark: #97805A;
+    --leaf: #4C7A4F;
+    --leaf-2: #74A264;
+    --dust: #97805A;
+    --bloom-a: #DE7857;
+    --bloom-b: #D9A441;
+    --bloom-c: #5B8FBF;
+    --bloom-d: #9B7FBF;
+    --danger: #C0563B;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #121411;
+      --ink: #E6E4D8;
+      --ink-soft: #9A9F8F;
+      --ink-faint: #626857;
+      --line: #2A2D23;
+      --accent: #6FB3A2;
+      --panel: rgba(18, 20, 17, 0.72);
+      --soil-top: #56503C;
+      --soil-light: #46402D;
+      --soil-dark: #262216;
+      --leaf: #5E9159;
+      --leaf-2: #85B473;
+      --dust: #85B473;
+      --bloom-a: #E88A67;
+      --bloom-b: #E3B45C;
+      --bloom-c: #74A5D3;
+      --bloom-d: #AE93D4;
+      --danger: #E07B5D;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Mulish", -apple-system, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    margin: 0;
+    overflow: hidden;
+  }
+
+  #scene {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: grab;
+    touch-action: none;
+  }
+  #scene.dragging { cursor: grabbing; }
+
+  .brand {
+    position: fixed;
+    top: 26px;
+    left: 0; right: 0;
+    text-align: center;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .brand .word {
+    font-family: "Marcellus", Georgia, serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.42em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .brand .date {
+    margin-top: 4px;
+    font-size: 0.74rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .hint {
+    position: fixed;
+    bottom: 16px;
+    left: 24px;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+    pointer-events: none;
+    z-index: 2;
+  }
+  @media (max-width: 760px) { .hint { display: none; } }
+
+  .panel {
+    position: fixed;
+    right: 28px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 372px;
+    max-height: calc(100vh - 110px);
+    overflow-y: auto;
+    z-index: 3;
+    background: var(--panel);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 26px 28px 22px;
+  }
+  @media (max-width: 760px) {
+    .panel {
+      right: 10px; left: 10px;
+      top: auto; bottom: 10px;
+      transform: none;
+      width: auto;
+      max-height: 54vh;
+      padding: 20px 20px 16px;
+    }
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 16px;
+    margin-bottom: 18px;
+  }
+  .chip {
+    background: none;
+    border: none;
+    font: inherit;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    cursor: pointer;
+    padding: 5px 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border-bottom: 2px solid transparent;
+  }
+  .chip .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--dot, var(--leaf));
+  }
+  .chip[aria-pressed="true"] {
+    color: var(--ink);
+    border-bottom-color: var(--ink);
+  }
+  .chip:hover { color: var(--ink); }
+  .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+  h2.garden-title {
+    font-family: "Marcellus", Georgia, serif;
+    font-weight: 400;
+    font-size: 1.45rem;
+    color: var(--ink);
+    margin: 0 0 2px;
+  }
+
+  .counts {
+    color: var(--ink-faint);
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 20px;
+    min-height: 1.2em;
+  }
+  .counts .grown { color: var(--leaf); }
+
+  form {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+  }
+  #task-input {
+    flex: 1;
+    background: none;
+    border: none;
+    font: inherit;
+    font-size: 0.95rem;
+    color: var(--ink);
+    padding: 8px 0;
+    min-width: 0;
+  }
+  #task-input::placeholder { color: var(--ink-faint); }
+  #task-input:focus { outline: none; }
+  form:focus-within { border-bottom-color: var(--accent); }
+  form button {
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--ink-soft);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 5px 14px;
+    cursor: pointer;
+    flex: none;
+  }
+  form button:hover { border-color: var(--accent); color: var(--accent); }
+  form button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  form button:disabled { opacity: 0.5; cursor: default; }
+
+  ul { list-style: none; margin: 0; padding: 0; }
+  li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 2px;
+    border-bottom: 1px solid var(--line);
+  }
+  li:last-child { border-bottom-color: transparent; }
+  li.pending { opacity: 0.55; }
+  .label { flex: 1; word-break: break-word; font-size: 0.95rem; }
+
+  .check {
+    flex: none;
+    width: 20px; height: 20px;
+    border: 1.5px solid var(--ink-faint);
+    border-radius: 50%;
+    background: none;
+    cursor: pointer;
+    padding: 0;
+    display: grid;
+    place-items: center;
+  }
+  .check:hover { border-color: var(--accent); }
+  .check:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .check svg { opacity: 0; }
+  li.done .check { background: var(--leaf); border-color: var(--leaf); }
+  li.done .check svg { opacity: 1; }
+  li.done .label { color: var(--ink-faint); text-decoration: line-through; }
+
+  .remove {
+    flex: none;
+    background: none;
+    border: none;
+    color: var(--ink-faint);
+    cursor: pointer;
+    font-size: 0.95rem;
+    line-height: 1;
+    padding: 4px 6px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    border-radius: 4px;
+  }
+  li:hover .remove, .remove:focus-visible { opacity: 1; }
+  .remove:hover { color: var(--danger); }
+  .remove.armed { opacity: 1; color: var(--danger); font-size: 0.72rem; font-weight: 700; }
+  .remove:focus-visible { outline: 2px solid var(--accent); }
+
+  .section-label {
+    margin: 20px 0 0;
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  #tended-list li { padding: 7px 2px; border-bottom-color: transparent; }
+
+  .empty {
+    color: var(--ink-faint);
+    font-style: italic;
+    font-size: 0.9rem;
+    padding: 18px 0 6px;
+  }
+
+  .setup {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: grid;
+    place-items: center;
+    background: var(--ground);
+    padding: 24px;
+  }
+  .setup[hidden] { display: none; }
+  .setup-card {
+    width: min(520px, 100%);
+    text-align: center;
+  }
+  .setup-card h2 {
+    font-family: "Marcellus", Georgia, serif;
+    font-weight: 400;
+    font-size: 1.6rem;
+    margin: 0 0 8px;
+  }
+  .setup-card p {
+    color: var(--ink-soft);
+    font-size: 0.92rem;
+    margin: 0 0 18px;
+  }
+  .setup-card code {
+    font-size: 0.85em;
+    background: var(--line);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+  #config-input {
+    width: 100%;
+    height: 130px;
+    resize: vertical;
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    color: var(--ink);
+    font: 0.8rem/1.5 ui-monospace, Menlo, monospace;
+    padding: 12px;
+  }
+  #config-input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  .setup-card .err {
+    color: var(--danger);
+    font-size: 0.85rem;
+    min-height: 1.3em;
+    margin: 8px 0 0;
+  }
+  .setup-card button {
+    margin-top: 14px;
+    background: var(--accent);
+    color: var(--ground);
+    border: none;
+    border-radius: 999px;
+    font: inherit;
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 9px 26px;
+    cursor: pointer;
+  }
+  .setup-card button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .sync {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    justify-content: center;
+    margin-top: 22px;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+  }
+  .sync .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--leaf-2);
+  }
+  .sync.err .dot { background: var(--danger); }
+  .sync.err { color: var(--danger); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .remove { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="scene" aria-hidden="true"></canvas>
+
+<header class="brand">
+  <div class="word">Oasis</div>
+  <div class="date" id="date"></div>
+</header>
+
+<div class="hint">Drag to orbit &nbsp;·&nbsp; scroll to zoom &nbsp;·&nbsp; click an island</div>
+
+<div class="setup" id="setup" hidden>
+  <div class="setup-card">
+    <h2>Connect to Foquito</h2>
+    <p>Paste your Foquito settings JSON below — it needs <code>supabaseUrl</code> and
+    <code>supabaseAnonKey</code>. It's stored only in this browser.</p>
+    <textarea id="config-input" spellcheck="false" aria-label="Foquito settings JSON"></textarea>
+    <div class="err" id="config-err"></div>
+    <button id="config-save">Connect</button>
+  </div>
+</div>
+
+<aside class="panel">
+  <nav class="chips" id="chips" aria-label="Gardens"></nav>
+
+  <h2 class="garden-title" id="garden-title"></h2>
+  <div class="counts" id="counts"></div>
+
+  <form id="add-form">
+    <input id="task-input" type="text" maxlength="300" placeholder="What needs tending?" autocomplete="off" aria-label="New task">
+    <button type="submit" id="add-btn">Plant</button>
+  </form>
+
+  <ul id="list"></ul>
+  <div class="empty" id="empty" hidden></div>
+
+  <div class="section-label" id="tended-label" hidden>Tended today</div>
+  <ul id="tended-list"></ul>
+
+  <div class="sync" id="sync"><span class="dot"></span><span id="sync-text">Connecting to Foquito…</span></div>
+</aside>
+
+<script>
+(() => {
+  "use strict";
+  // ---- Foquito backend (same Supabase project the dashboard app uses) ----
+  // Config is pasted once by the user (their Foquito settings JSON) and kept
+  // in this browser's localStorage — never baked into this file.
+  const CONFIG_KEY = "oasis-live-config";
+  let SUPABASE_URL = null, SUPABASE_KEY = null, HEADERS = null;
+
+  function loadConfig() {
+    try {
+      const c = JSON.parse(localStorage.getItem(CONFIG_KEY));
+      if (c && c.supabaseUrl && c.supabaseAnonKey) return c;
+    } catch (e) { /* fall through */ }
+    return null;
+  }
+  function applyConfig(c) {
+    SUPABASE_URL = c.supabaseUrl.replace(/\/+$/, "");
+    SUPABASE_KEY = c.supabaseAnonKey;
+    HEADERS = {
+      "apikey": SUPABASE_KEY,
+      "Authorization": "Bearer " + SUPABASE_KEY,
+      "Content-Type": "application/json"
+    };
+  }
+  const POLL_MS = 25000;
+  const CACHE_KEY = "oasis-live-cache";
+
+  const ACRONYM_CASE = { phd: "PhD" };
+  const gardenName = cat => cat.split("-")
+    .map(w => ACRONYM_CASE[w] || w.charAt(0).toUpperCase() + w.slice(1))
+    .join("-");
+  const BLOOMS = ["--bloom-a", "--bloom-b", "--bloom-c", "--bloom-d"];
+
+  const todayKey = () => new Date().toLocaleDateString("sv");
+  const dayOf = iso => iso ? new Date(iso).toLocaleDateString("sv") : null;
+  const hash = s => { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
+
+  // ---------- state ----------
+  let rows = [];               // raw Foquito task rows (kind='task')
+  let state = { gardens: [], selected: null };
+  let gardenOrder = null;      // category order fixed on first build
+  let lastSyncAt = null, syncError = null;
+
+  function buildState() {
+    const cats = new Map();
+    for (const r of rows) {
+      if (!cats.has(r.category)) cats.set(r.category, []);
+      cats.get(r.category).push(r);
+    }
+    let order = gardenOrder;
+    if (!order) {
+      order = [...cats.keys()].sort((a, b) =>
+        cats.get(b).filter(t => !t.done).length - cats.get(a).filter(t => !t.done).length);
+      gardenOrder = order;
+    } else {
+      for (const c of cats.keys()) if (!order.includes(c)) order.push(c);
+    }
+    const today = todayKey();
+    state.gardens = order.filter(c => cats.has(c)).map((cat, i) => {
+      const ts = cats.get(cat).slice().sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+      return {
+        id: cat,
+        name: gardenName(cat),
+        seed: hash(cat),
+        bloom: BLOOMS[i % BLOOMS.length],
+        plants: ts.filter(t => t.done && dayOf(t.done_at) !== today).length,
+        tasks: ts.filter(t => !t.done || dayOf(t.done_at) === today)
+          .map(t => ({ id: t.id, text: t.title, done: t.done, pending: !!t._pending }))
+      };
+    });
+    if (!state.gardens.find(g => g.id === state.selected)) {
+      state.selected = state.gardens.length ? state.gardens[0].id : null;
+    }
+  }
+
+  // ---------- sync ----------
+  async function api(path, opts) {
+    const res = await fetch(SUPABASE_URL + "/rest/v1/" + path, {
+      ...opts,
+      headers: { ...HEADERS, ...(opts && opts.headers) }
+    });
+    if (!res.ok) throw new Error("Foquito sync failed (" + res.status + ")");
+    return res.status === 204 ? null : res.json();
+  }
+
+  let refreshing = false;
+  async function refresh() {
+    if (refreshing) return;
+    refreshing = true;
+    try {
+      rows = await api("tasks?select=id,title,category,done,done_at,sort_order,kind&kind=eq.task&order=sort_order.asc&limit=2000");
+      syncError = null;
+      lastSyncAt = new Date();
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify(rows)); } catch (e) { /* ignore */ }
+      buildState();
+      render();
+    } catch (e) {
+      syncError = e.message || "offline";
+      renderSync();
+    } finally {
+      refreshing = false;
+    }
+  }
+
+  async function mutate(fn, rollbackMsg) {
+    try {
+      await fn();
+      syncError = null;
+      lastSyncAt = new Date();
+    } catch (e) {
+      syncError = (rollbackMsg || "Change didn't save") + " — retrying sync";
+    }
+    refresh();
+  }
+
+  // ---------- dom ----------
+  const $ = id => document.getElementById(id);
+  const chipsEl = $("chips"), listEl = $("list"), tendedEl = $("tended-list"),
+        tendedLabel = $("tended-label"), emptyEl = $("empty"), countsEl = $("counts"),
+        titleEl = $("garden-title"), form = $("add-form"), input = $("task-input"),
+        addBtn = $("add-btn"), syncEl = $("sync"), syncText = $("sync-text");
+
+  $("date").textContent = new Date().toLocaleDateString(undefined,
+    { weekday: "long", month: "long", day: "numeric" });
+
+  const CHECK_SVG = '<svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">' +
+    '<path d="M2 6.5 L5 9.5 L10 3" stroke="#FDFDFB" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  const current = () => state.gardens.find(g => g.id === state.selected);
+  const grownCount = g => g.plants + g.tasks.filter(t => t.done).length;
+
+  let armedRemove = null; // task id whose × was clicked once
+
+  function taskRow(g, t) {
+    const li = document.createElement("li");
+    li.className = (t.done ? "done" : "") + (t.pending ? " pending" : "");
+
+    const check = document.createElement("button");
+    check.className = "check";
+    check.innerHTML = CHECK_SVG;
+    check.setAttribute("aria-label", (t.done ? "Mark not done: " : "Mark done: ") + t.text);
+    check.setAttribute("aria-pressed", String(t.done));
+    check.addEventListener("click", () => toggleTask(g, t));
+
+    const label = document.createElement("span");
+    label.className = "label";
+    label.textContent = t.text;
+
+    const rm = document.createElement("button");
+    rm.className = "remove" + (armedRemove === t.id ? " armed" : "");
+    rm.textContent = armedRemove === t.id ? "delete?" : "×";
+    rm.setAttribute("aria-label", (armedRemove === t.id ? "Confirm delete: " : "Delete from Foquito: ") + t.text);
+    rm.addEventListener("click", () => {
+      if (armedRemove !== t.id) { armedRemove = t.id; render(); return; }
+      armedRemove = null;
+      const row = rows.find(r => r.id === t.id);
+      if (row) row._pending = true;
+      buildState(); render();
+      mutate(() => api("tasks?id=eq." + t.id, { method: "DELETE" }), "Delete didn't reach Foquito");
+    });
+
+    li.append(check, label, rm);
+    return li;
+  }
+
+  function toggleTask(g, t) {
+    armedRemove = null;
+    const row = rows.find(r => r.id === t.id);
+    if (!row) return;
+    const marking = !row.done;
+    row.done = marking;
+    row.done_at = marking ? new Date().toISOString() : null;
+    row._pending = true;
+    if (marking) scene.celebrate(g.id);
+    buildState(); render();
+    mutate(() => api("tasks?id=eq." + t.id, {
+      method: "PATCH",
+      body: JSON.stringify({ done: marking, done_at: row.done_at })
+    }), "Check-off didn't reach Foquito");
+  }
+
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    const text = input.value.trim();
+    const g = current();
+    if (!text || !g) return;
+    input.value = "";
+    const maxSort = Math.max(0, ...rows.filter(r => r.category === g.id).map(r => r.sort_order || 0));
+    const temp = { id: "tmp-" + Date.now(), title: text, category: g.id, done: false,
+                   done_at: null, sort_order: maxSort + 1, _pending: true };
+    rows.push(temp);
+    buildState(); render();
+    mutate(() => api("tasks", {
+      method: "POST",
+      headers: { "Prefer": "return=minimal" },
+      body: JSON.stringify({ title: text, category: g.id, kind: "task", source: "manual",
+                             done: false, sort_order: maxSort + 1 })
+    }), "New task didn't reach Foquito");
+  });
+
+  function renderSync() {
+    if (syncError) {
+      syncEl.className = "sync err";
+      syncText.textContent = syncError;
+    } else if (lastSyncAt) {
+      syncEl.className = "sync";
+      syncText.textContent = "Synced with Foquito · " +
+        lastSyncAt.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+    } else {
+      syncEl.className = "sync";
+      syncText.textContent = "Connecting to Foquito…";
+    }
+  }
+
+  function render() {
+    const g = current();
+
+    chipsEl.textContent = "";
+    for (const gd of state.gardens) {
+      const b = document.createElement("button");
+      b.className = "chip";
+      b.setAttribute("aria-pressed", String(gd.id === state.selected));
+      b.style.setProperty("--dot", "var(" + gd.bloom + ")");
+      b.innerHTML = '<span class="dot"></span>';
+      b.append(gd.name);
+      b.addEventListener("click", () => { state.selected = gd.id; armedRemove = null; render(); });
+      chipsEl.append(b);
+    }
+
+    if (!g) {
+      titleEl.textContent = "";
+      countsEl.textContent = "";
+      listEl.textContent = "";
+      tendedEl.textContent = "";
+      tendedLabel.hidden = true;
+      emptyEl.hidden = false;
+      emptyEl.textContent = "Waiting for Foquito…";
+      renderSync();
+      scene.update(state);
+      return;
+    }
+
+    titleEl.textContent = g.name;
+
+    const open = g.tasks.filter(t => !t.done);
+    const doneToday = g.tasks.filter(t => t.done);
+
+    listEl.textContent = "";
+    for (const t of open) listEl.append(taskRow(g, t));
+
+    tendedEl.textContent = "";
+    for (const t of doneToday) tendedEl.append(taskRow(g, t));
+    tendedLabel.hidden = doneToday.length === 0;
+
+    emptyEl.hidden = open.length > 0;
+    if (open.length === 0) {
+      emptyEl.textContent = grownCount(g) > 0
+        ? "All tended. The garden grows."
+        : "Bare soil. Plant your first task.";
+    }
+
+    const grown = grownCount(g);
+    countsEl.innerHTML = grown
+      ? '<span class="grown">' + grown + (grown === 1 ? " plant" : " plants") + "</span> growing · "
+        + doneToday.length + " tended today"
+      : "Nothing planted yet";
+
+    renderSync();
+    scene.update(state);
+  }
+
+  // ---------- the floating world ----------
+  const scene = (() => {
+    const canvas = $("scene");
+    const ctx = canvas.getContext("2d");
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const A = 54;
+    const RIM_H = 16;
+    const TIP_D = 34;
+    const MAX_PLANTS = 14;
+
+    let colors = {}, rgbCache = {};
+    let islands = [];
+    let births = {}, prevCounts = {};
+    let rings = [];
+    let dust = [];
+    let cssW = 0, cssH = 0, dpr = 1;
+
+    const cam = { theta: 0.7, phi: 0.46, radius: 470, fov: 640 };
+    let camFitted = false;
+    let dragging = false, dragMoved = 0, lastX = 0, lastY = 0;
+    let autoDrift = true;
+
+    const TOKENS = ["--soil-top", "--soil-light", "--soil-dark", "--leaf", "--leaf-2",
+                    "--ink", "--ink-soft", "--ink-faint", "--dust", "--accent",
+                    "--bloom-a", "--bloom-b", "--bloom-c", "--bloom-d"];
+    function readColors() {
+      const cs = getComputedStyle(document.documentElement);
+      for (const t of TOKENS) colors[t] = cs.getPropertyValue(t).trim();
+      rgbCache = {};
+      if (reduced.matches) draw(performance.now());
+    }
+    function rgb(token) {
+      if (!rgbCache[token]) {
+        const h = (colors[token] || "#888888").replace("#", "");
+        rgbCache[token] = h.length >= 6
+          ? [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]
+          : [136, 136, 136];
+      }
+      return rgbCache[token];
+    }
+    const css = (v, a) => "rgba(" + (v[0] | 0) + "," + (v[1] | 0) + "," + (v[2] | 0) + "," + (a === undefined ? 1 : a) + ")";
+    const mix = (u, v, t) => [u[0] + (v[0] - u[0]) * t, u[1] + (v[1] - u[1]) * t, u[2] + (v[2] - u[2]) * t];
+
+    readColors();
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => setTimeout(readColors, 40));
+    setInterval(() => {
+      const v = getComputedStyle(document.documentElement).getPropertyValue("--soil-top").trim();
+      if (v && v !== colors["--soil-top"]) readColors();
+    }, 400);
+
+    function resize() {
+      cssW = window.innerWidth;
+      cssH = window.innerHeight;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(cssW * dpr);
+      canvas.height = Math.round(cssH * dpr);
+      if (reduced.matches) draw(performance.now());
+    }
+    window.addEventListener("resize", resize);
+
+    function mulberry32(seed) {
+      return function () {
+        seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+        let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    const centerX = () => cssW > 760 ? (cssW - 400) / 2 : cssW / 2;
+    const centerY = () => cssW > 760 ? cssH * 0.52 : cssH * 0.34;
+
+    function project(x, y, z) {
+      const ct = Math.cos(cam.theta), st = Math.sin(cam.theta);
+      const cp = Math.cos(cam.phi), sp = Math.sin(cam.phi);
+      const x1 = x * ct - z * st;
+      const z1 = x * st + z * ct;
+      const y2 = y * cp - z1 * sp;
+      const z2 = y * sp + z1 * cp;
+      const depth = cam.radius - z2;
+      if (depth < 60) return null;
+      const s = cam.fov / depth;
+      return [centerX() + x1 * s, centerY() - y2 * s, depth, s];
+    }
+
+    function layoutIslands() {
+      const n = islands.length;
+      islands.forEach((isl, i) => {
+        const rnd = mulberry32(isl.seed ^ 0xBEEF);
+        if (n === 1) {
+          isl.base = { x: 0, y: 0, z: 0 };
+        } else {
+          const ang = (i / n) * Math.PI * 2 + 0.5;
+          const rr = 118 + n * 16 + rnd() * 30;
+          isl.base = {
+            x: Math.cos(ang) * rr,
+            y: (rnd() * 2 - 1) * 34,
+            z: Math.sin(ang) * rr
+          };
+        }
+        isl.phase = rnd() * Math.PI * 2;
+      });
+    }
+
+    function update(st) {
+      const keepLift = {};
+      for (const isl of islands) keepLift[isl.id] = isl.lift;
+      islands = st.gardens.map(g => ({
+        id: g.id, name: g.name, seed: g.seed, bloom: g.bloom,
+        count: g.plants + g.tasks.filter(t => t.done).length,
+        selected: g.id === st.selected,
+        lift: keepLift[g.id] || 0
+      }));
+      for (const isl of islands) {
+        const prev = prevCounts[isl.id];
+        if (prev !== undefined && isl.count > prev) {
+          births[isl.id] = births[isl.id] || {};
+          for (let i = prev; i < isl.count; i++) births[isl.id][i] = performance.now();
+        }
+        prevCounts[isl.id] = isl.count;
+      }
+      layoutIslands();
+      if (!camFitted && islands.length) {
+        cam.radius = Math.min(760, Math.max(470, 340 + islands.length * 52));
+        camFitted = true;
+      }
+      if (reduced.matches) draw(performance.now());
+    }
+
+    function celebrate(id) {
+      rings.push({ islandId: id, r: 10, alpha: 0.6 });
+    }
+
+    (function initDust() {
+      const rnd = mulberry32(0xA11CE);
+      for (let i = 0; i < 70; i++) {
+        dust.push({
+          x: (rnd() * 2 - 1) * 340,
+          y: (rnd() * 2 - 1) * 200,
+          z: (rnd() * 2 - 1) * 340,
+          drift: 2 + rnd() * 6,
+          phase: rnd() * Math.PI * 2
+        });
+      }
+    })();
+
+    const LIGHT = (() => {
+      const l = [0.45, 0.75, 0.3];
+      const m = Math.hypot(...l);
+      return l.map(v => v / m);
+    })();
+    const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+
+    function islandY(isl, t) {
+      const bob = reduced.matches ? 0 : Math.sin(t / 2400 + isl.phase) * 7;
+      return isl.base.y + bob + isl.lift;
+    }
+
+    function islandItems(isl, t, items) {
+      const { x: bx, z: bz } = isl.base;
+      const by = islandY(isl, t);
+
+      const T = [[A, 0, A], [A, 0, -A], [-A, 0, -A], [-A, 0, A]]
+        .map(([px, py, pz]) => [bx + px, by + py, bz + pz]);
+      const M = T.map(([px, py, pz]) => [px, py - RIM_H, pz]);
+      const tip = [bx, by - RIM_H - TIP_D, bz];
+
+      const lightRGB = rgb("--soil-light");
+      const darkRGB = rgb("--soil-dark");
+      const topRGB = rgb("--soil-top");
+
+      const faces = [];
+      faces.push({ pts: T, normal: [0, 1, 0], kind: "top" });
+      const sideN = [[1, 0, 0], [0, 0, -1], [-1, 0, 0], [0, 0, 1]];
+      for (let i = 0; i < 4; i++) {
+        faces.push({ pts: [T[i], T[(i + 1) % 4], M[(i + 1) % 4], M[i]], normal: sideN[i], kind: "rim" });
+      }
+      for (let i = 0; i < 4; i++) {
+        const n = [sideN[i][0] * 0.8, -0.55, sideN[i][2] * 0.8];
+        faces.push({ pts: [M[i], M[(i + 1) % 4], tip], normal: n, kind: "taper" });
+      }
+
+      let topAvg = null;
+      for (const f of faces) {
+        const proj = f.pts.map(p => project(p[0], p[1], p[2]));
+        if (proj.some(p => !p)) continue;
+        const depth = proj.reduce((s, p) => s + p[2], 0) / proj.length;
+        if (f.kind === "top") { topAvg = depth; isl.topDepth = depth; }
+        let fill;
+        if (f.kind === "top") {
+          fill = css(topRGB, 1);
+        } else {
+          const b = Math.max(0, dot(f.normal, LIGHT));
+          const base = mix(darkRGB, lightRGB, 0.25 + 0.75 * b);
+          fill = css(f.kind === "taper" ? mix(base, darkRGB, 0.35) : base, 1);
+        }
+        items.push({ depth, alpha: isl.selected ? 1 : 0.88, draw: c => {
+          c.fillStyle = fill;
+          c.beginPath();
+          c.moveTo(proj[0][0], proj[0][1]);
+          for (let i = 1; i < proj.length; i++) c.lineTo(proj[i][0], proj[i][1]);
+          c.closePath();
+          c.fill();
+        }});
+      }
+
+      if (isl.selected) {
+        const proj = T.map(p => project(p[0], p[1] + 0.6, p[2]));
+        if (!proj.some(p => !p)) {
+          const depth = proj.reduce((s, p) => s + p[2], 0) / proj.length - 2;
+          items.push({ depth, alpha: 1, draw: c => {
+            c.strokeStyle = colors["--accent"];
+            c.lineWidth = 1.4;
+            c.globalAlpha *= 0.8;
+            c.beginPath();
+            c.moveTo(proj[0][0], proj[0][1]);
+            for (let i = 1; i < 4; i++) c.lineTo(proj[i][0], proj[i][1]);
+            c.closePath();
+            c.stroke();
+          }});
+        }
+      }
+
+      const rnd = mulberry32(isl.seed);
+      const species0 = Math.floor(rnd() * 4);
+      const n = Math.min(isl.count, MAX_PLANTS);
+      for (let i = 0; i < MAX_PLANTS; i++) {
+        const wx = (rnd() * 2 - 1) * A * 0.62;
+        const wz = (rnd() * 2 - 1) * A * 0.62;
+        const sp = rnd() < 0.72 ? species0 : Math.floor(rnd() * 4);
+        const hh = 20 + rnd() * 17;
+        const phase = rnd() * Math.PI * 2;
+        if (i >= n) continue;
+        const p = project(bx + wx, by, bz + wz);
+        if (!p) continue;
+        let grow = 1;
+        const born = births[isl.id] && births[isl.id][i];
+        if (born && !reduced.matches) {
+          const age = Math.min(1, (t - born) / 1100);
+          grow = 1 - Math.pow(1 - age, 3);
+          if (age >= 1) delete births[isl.id][i];
+        }
+        const sway = reduced.matches ? 0 : Math.sin(t / 900 + phase) * 1.6;
+        const scale = p[3];
+        const plantDepth = topAvg === null ? p[2] - 1 : topAvg - 1 + (p[2] - topAvg) * 0.001;
+        items.push({ depth: plantDepth, alpha: isl.selected ? 1 : 0.88, draw: c => {
+          drawPlant(c, sp, p[0], p[1], hh * grow * scale, sway * scale, scale, colors[isl.bloom], grow);
+        }});
+      }
+
+      const lp = project(bx, by + 46, bz);
+      if (lp) {
+        const fade = Math.max(0.35, Math.min(1, (700 - lp[2]) / 320));
+        items.push({ depth: lp[2] - 2, alpha: 1, draw: c => {
+          c.font = "600 " + Math.min(14, Math.max(10, 12 * lp[3])).toFixed(1) + "px Mulish, sans-serif";
+          c.textAlign = "center";
+          c.fillStyle = colors[isl.selected ? "--ink" : "--ink-faint"];
+          c.globalAlpha *= fade;
+          c.fillText(isl.name || "Unnamed", lp[0], lp[1]);
+        }});
+      }
+    }
+
+    function drawPlant(c, sp, bx, by, h, sway, scale, bloom, grow) {
+      if (h < 1) return;
+      c.lineCap = "round";
+      const lw = w => Math.max(0.7, w * scale);
+
+      if (sp === 0) {
+        c.strokeStyle = colors["--leaf"];
+        c.lineWidth = lw(1.8);
+        for (let k = -1; k <= 1; k++) {
+          const hh = h * (1 - Math.abs(k) * 0.25);
+          c.beginPath();
+          c.moveTo(bx + k * 2.5 * scale, by);
+          c.quadraticCurveTo(bx + (k * 3 + sway * 0.4) * scale, by - hh * 0.6,
+                             bx + (k * 4) * scale + sway, by - hh);
+          c.stroke();
+        }
+        c.fillStyle = colors["--leaf-2"];
+        c.beginPath();
+        c.ellipse(bx + sway, by - h - 2 * scale, 2 * scale, 4.2 * scale, 0, 0, Math.PI * 2);
+        c.fill();
+      } else if (sp === 1) {
+        c.strokeStyle = colors["--leaf"];
+        c.lineWidth = lw(2);
+        c.beginPath();
+        c.moveTo(bx, by);
+        c.lineTo(bx + sway * 0.5, by - h * 0.45);
+        c.stroke();
+        const r = h * 0.34;
+        c.fillStyle = colors["--leaf"];
+        c.beginPath(); c.arc(bx + sway * 0.5 - r * 0.5, by - h * 0.5, r, 0, Math.PI * 2); c.fill();
+        c.beginPath(); c.arc(bx + sway * 0.5 + r * 0.55, by - h * 0.55, r * 0.85, 0, Math.PI * 2); c.fill();
+        c.fillStyle = colors["--leaf-2"];
+        c.beginPath(); c.arc(bx + sway * 0.6, by - h * 0.72, r * 0.8, 0, Math.PI * 2); c.fill();
+      } else if (sp === 2) {
+        c.strokeStyle = colors["--leaf"];
+        c.lineWidth = lw(1.8);
+        c.beginPath();
+        c.moveTo(bx, by);
+        c.quadraticCurveTo(bx + sway * 0.4, by - h * 0.6, bx + sway, by - h);
+        c.stroke();
+        c.beginPath();
+        c.moveTo(bx + sway * 0.2, by - h * 0.45);
+        c.quadraticCurveTo(bx + (6 * scale) + sway * 0.2, by - h * 0.55,
+                           bx + (8 * scale) + sway * 0.2, by - h * 0.42);
+        c.stroke();
+        if (grow > 0.55) {
+          const px = bx + sway, py = by - h - scale;
+          c.fillStyle = bloom;
+          const pr = 2.6 * scale * Math.min(1, (grow - 0.55) / 0.45);
+          for (let k = 0; k < 5; k++) {
+            const a = (k / 5) * Math.PI * 2;
+            c.beginPath();
+            c.arc(px + Math.cos(a) * pr * 1.35, py + Math.sin(a) * pr * 1.35, pr, 0, Math.PI * 2);
+            c.fill();
+          }
+          c.fillStyle = colors["--soil-top"];
+          c.beginPath(); c.arc(px, py, pr * 0.75, 0, Math.PI * 2); c.fill();
+        }
+      } else {
+        c.strokeStyle = colors["--leaf-2"];
+        c.lineWidth = lw(3);
+        const nb = 6;
+        for (let k = 0; k < nb; k++) {
+          const a = Math.PI + (k / (nb - 1)) * Math.PI;
+          const hh = h * (0.45 + 0.25 * Math.sin((k / (nb - 1)) * Math.PI));
+          c.beginPath();
+          c.moveTo(bx, by);
+          c.lineTo(bx + Math.cos(a) * hh * 0.5 + sway * 0.3, by - Math.abs(Math.sin(a)) * hh);
+          c.stroke();
+        }
+      }
+    }
+
+    function draw(now) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, cssW, cssH);
+
+      if (autoDrift && !dragging && !reduced.matches) cam.theta += 0.00045;
+
+      for (const isl of islands) {
+        const target = isl.selected ? 16 : 0;
+        isl.lift += (target - isl.lift) * (reduced.matches ? 1 : 0.08);
+      }
+
+      const items = [];
+
+      const dustRGB = rgb("--dust");
+      for (const d of dust) {
+        const dy = reduced.matches ? 0 : Math.sin(now / 3000 + d.phase) * d.drift * 2;
+        const p = project(d.x, d.y + dy, d.z);
+        if (!p) continue;
+        items.push({ depth: p[2], alpha: 1, draw: c => {
+          c.fillStyle = css(dustRGB, 0.16);
+          c.beginPath();
+          c.arc(p[0], p[1], Math.max(0.6, 1.6 * p[3]), 0, Math.PI * 2);
+          c.fill();
+        }});
+      }
+
+      for (const isl of islands) islandItems(isl, now, items);
+
+      for (const r of rings) {
+        const isl = islands.find(i => i.id === r.islandId);
+        if (!isl) { r.alpha = 0; continue; }
+        const by = islandY(isl, now);
+        const pts = [];
+        let ok = true;
+        for (let k = 0; k <= 22; k++) {
+          const a = (k / 22) * Math.PI * 2;
+          const p = project(isl.base.x + Math.cos(a) * r.r, by + 1, isl.base.z + Math.sin(a) * r.r);
+          if (!p) { ok = false; break; }
+          pts.push(p);
+        }
+        if (ok) {
+          const depth = (isl.topDepth !== undefined ? isl.topDepth : pts[0][2]) - 3;
+          const alpha = r.alpha;
+          items.push({ depth, alpha: 1, draw: c => {
+            c.strokeStyle = colors["--leaf-2"];
+            c.globalAlpha *= alpha;
+            c.lineWidth = 1.3;
+            c.beginPath();
+            c.moveTo(pts[0][0], pts[0][1]);
+            for (let k = 1; k < pts.length; k++) c.lineTo(pts[k][0], pts[k][1]);
+            c.stroke();
+          }});
+        }
+        if (!reduced.matches) { r.r += 1.6; r.alpha -= 0.012; } else r.alpha = 0;
+      }
+      rings = rings.filter(r => r.alpha > 0.02 && r.r < 160);
+
+      items.sort((a, b) => b.depth - a.depth);
+      for (const it of items) {
+        ctx.globalAlpha = it.alpha;
+        it.draw(ctx);
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    function frame(now) {
+      draw(now);
+      if (!reduced.matches) requestAnimationFrame(frame);
+    }
+
+    canvas.addEventListener("pointerdown", e => {
+      dragging = true; dragMoved = 0;
+      lastX = e.clientX; lastY = e.clientY;
+      canvas.classList.add("dragging");
+      canvas.setPointerCapture(e.pointerId);
+    });
+    canvas.addEventListener("pointermove", e => {
+      if (!dragging) return;
+      const dx = e.clientX - lastX, dy = e.clientY - lastY;
+      dragMoved += Math.abs(dx) + Math.abs(dy);
+      lastX = e.clientX; lastY = e.clientY;
+      cam.theta -= dx * 0.0052;
+      cam.phi = Math.min(1.15, Math.max(0.12, cam.phi + dy * 0.0038));
+      if (reduced.matches) draw(performance.now());
+    });
+    canvas.addEventListener("pointerup", e => {
+      dragging = false;
+      canvas.classList.remove("dragging");
+      if (dragMoved < 6) pick(e.clientX, e.clientY);
+    });
+    canvas.addEventListener("pointercancel", () => {
+      dragging = false;
+      canvas.classList.remove("dragging");
+    });
+    canvas.addEventListener("wheel", e => {
+      e.preventDefault();
+      cam.radius = Math.min(760, Math.max(280, cam.radius + e.deltaY * 0.6));
+      if (reduced.matches) draw(performance.now());
+    }, { passive: false });
+
+    function pick(mx, my) {
+      const t = performance.now();
+      let best = null;
+      for (const isl of islands) {
+        const by = islandY(isl, t);
+        const T = [[A, 0, A], [A, 0, -A], [-A, 0, -A], [-A, 0, A]]
+          .map(([px, py, pz]) => project(isl.base.x + px, by, isl.base.z + pz));
+        if (T.some(p => !p)) continue;
+        let inside = false;
+        for (let i = 0, j = 3; i < 4; j = i++) {
+          if (((T[i][1] > my) !== (T[j][1] > my)) &&
+              (mx < (T[j][0] - T[i][0]) * (my - T[i][1]) / (T[j][1] - T[i][1]) + T[i][0])) {
+            inside = !inside;
+          }
+        }
+        if (inside) {
+          const depth = T.reduce((s, p) => s + p[2], 0) / 4;
+          if (!best || depth < best.depth) best = { id: isl.id, depth };
+        }
+      }
+      if (best && best.id !== state.selected) {
+        state.selected = best.id;
+        armedRemove = null;
+        render();
+      }
+    }
+
+    resize();
+    requestAnimationFrame(frame);
+    reduced.addEventListener("change", () => {
+      if (!reduced.matches) requestAnimationFrame(frame);
+      else draw(performance.now());
+    });
+
+    return { update, celebrate };
+  })();
+
+  // ---------- boot ----------
+  function start() {
+    try {
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+      if (Array.isArray(cached)) { rows = cached; buildState(); }
+    } catch (e) { /* no cache */ }
+    render();
+    refresh();
+    setInterval(refresh, POLL_MS);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
+    input.focus({ preventScroll: true });
+  }
+
+  const setupEl = $("setup");
+  const savedConfig = loadConfig();
+  if (savedConfig) {
+    applyConfig(savedConfig);
+    start();
+  } else {
+    setupEl.hidden = false;
+    $("config-save").addEventListener("click", async () => {
+      const errEl = $("config-err");
+      errEl.textContent = "";
+      let cfg;
+      try {
+        cfg = JSON.parse($("config-input").value);
+      } catch (e) {
+        errEl.textContent = "That isn't valid JSON — paste the whole file.";
+        return;
+      }
+      if (!cfg || !cfg.supabaseUrl || !cfg.supabaseAnonKey) {
+        errEl.textContent = "Missing supabaseUrl or supabaseAnonKey in that JSON.";
+        return;
+      }
+      applyConfig(cfg);
+      try {
+        await api("tasks?select=id&limit=1");
+      } catch (e) {
+        errEl.textContent = "Couldn't reach Foquito with those settings — check and try again.";
+        return;
+      }
+      try {
+        localStorage.setItem(CONFIG_KEY, JSON.stringify(
+          { supabaseUrl: cfg.supabaseUrl, supabaseAnonKey: cfg.supabaseAnonKey }));
+      } catch (e) { /* storage unavailable — session-only */ }
+      setupEl.hidden = true;
+      start();
+    });
+  }
+})();
+</script>
+</body>
+</html>
