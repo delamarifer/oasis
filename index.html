@@ -159,6 +159,154 @@
     .galaxy-row { justify-content: center; }
   }
 
+  /* ---- priority buckets ---- */
+  .buckets {
+    position: fixed;
+    top: 86px;
+    left: 26px;
+    right: 428px;
+    z-index: 4;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .bucket {
+    flex: 0 1 190px;
+    min-width: 150px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--panel);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 9px 11px;
+    cursor: grab;
+    touch-action: none;
+  }
+  .bucket.empty {
+    border-style: dashed;
+    background: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    cursor: default;
+  }
+  .bucket.over { border-color: var(--accent); border-style: solid; }
+  .bucket.lifted { opacity: 0.35; }
+  .bucket .num {
+    flex: none;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--line);
+    color: var(--ink-soft);
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .bucket.filled .num { background: var(--accent); color: var(--ground); }
+  .bucket .body { flex: 1; min-width: 0; }
+  .bucket .title {
+    font-size: 0.85rem;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .bucket .src {
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-top: 2px;
+  }
+  .bucket .placeholder { font-size: 0.8rem; color: var(--ink-faint); font-style: italic; }
+  .bucket .check { width: 18px; height: 18px; }
+  .bucket .clear {
+    flex: none;
+    background: none;
+    border: none;
+    color: var(--ink-faint);
+    font-size: 0.9rem;
+    line-height: 1;
+    padding: 3px 4px;
+    cursor: pointer;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .bucket:hover .clear, .clear:focus-visible { opacity: 1; }
+  .bucket .clear:hover { color: var(--danger); }
+  .bucket .clear:focus-visible { outline: 2px solid var(--accent); }
+  .buckets .add {
+    flex: none;
+    align-self: center;
+    background: none;
+    border: none;
+    color: var(--ink-faint);
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 4px;
+  }
+  .buckets .add:hover { color: var(--accent); }
+  .buckets .add:focus-visible { outline: 2px solid var(--accent); }
+  .buckets .tip {
+    flex-basis: 100%;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+  }
+  @media (max-width: 760px) {
+    .buckets {
+      top: 116px;
+      left: 10px; right: 10px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .buckets .tip { display: none; }
+    .bucket { flex: 0 0 165px; }
+  }
+
+  .grip {
+    flex: none;
+    color: var(--ink-faint);
+    font-size: 0.8rem;
+    line-height: 1;
+    padding: 4px 2px;
+    cursor: grab;
+    opacity: 0;
+    transition: opacity 0.15s;
+    touch-action: none;
+    user-select: none;
+  }
+  li:hover .grip, .grip:focus-visible { opacity: 1; }
+  .grip:focus-visible { outline: 2px solid var(--accent); border-radius: 4px; }
+  li.bucketed .label { color: var(--accent); }
+
+  .drag-ghost {
+    position: fixed;
+    z-index: 30;
+    pointer-events: none;
+    background: var(--panel);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    padding: 7px 12px;
+    font-size: 0.85rem;
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+  }
+
   .hint {
     position: fixed;
     bottom: 16px;
@@ -542,6 +690,8 @@
   <div class="galaxy-row" id="galaxies"></div>
 </nav>
 
+<div class="buckets" id="buckets" aria-label="Priority buckets"></div>
+
 <div class="hint">Drag to orbit &nbsp;·&nbsp; scroll to zoom &nbsp;·&nbsp; click an island</div>
 
 <div class="overlay" id="setup" hidden>
@@ -603,6 +753,8 @@
   const CONFIG_KEY = "oasis-live-config";
   const CACHE_KEY = "oasis-live-cache-v2";
   const VIEW_KEY = "oasis-live-view";
+  const BUCKETS_KEY = "oasis-live-buckets";
+  const MAX_BUCKETS = 8;
   const POLL_MS = 25000;
   const FOQUITO = "foquito";
   const FOCUS_ID = "focus:sessions";
@@ -691,6 +843,16 @@ notify pgrst, 'reload schema';
   let editingTask = null;         // { id, draft }
   let editingGalaxy = false;
   let pendingGardenFocus = false;
+
+  // priority buckets: ranked slots holding one task each, across all galaxies.
+  // Kept in this browser only — the tasks themselves stay where they live.
+  let buckets = (() => {
+    const saved = readJSON(BUCKETS_KEY);
+    return Array.isArray(saved) && saved.length ? saved.slice(0, MAX_BUCKETS) : [null, null, null];
+  })();
+  const saveBuckets = () => writeJSON(BUCKETS_KEY, buckets);
+  let dragItem = null;            // { kind: "task"|"bucket", taskId?, index?, ghost }
+  let renderQueued = false;
 
   // ---------- api ----------
   async function api(path, opts = {}) {
@@ -829,6 +991,216 @@ notify pgrst, 'reload schema';
   const gardensFor = galaxy => galaxy.custom ? customGardens(galaxy.id) : foquitoGardens();
   const grownCount = g => g.plants + g.tasks.filter(t => t.done).length;
 
+  // Find a task anywhere (either galaxy kind) and the garden stub it belongs to,
+  // which is all the task operations need.
+  function resolveTask(id) {
+    const fq = data.tasks.find(r => r.id === id);
+    if (fq) {
+      return {
+        text: fq.title, done: fq.done,
+        gardenLabel: gardenName(fq.category),
+        garden: { id: "cat:" + fq.category, kind: "category", category: fq.category }
+      };
+    }
+    const ot = data.otasks.find(r => r.id === id);
+    if (ot) {
+      const gd = data.gardens.find(g => g.id === ot.garden_id);
+      return {
+        text: ot.title, done: ot.done,
+        gardenLabel: gd ? gd.name : "Garden",
+        garden: { id: ot.garden_id, kind: "custom" }
+      };
+    }
+    return null;
+  }
+
+  // ---------- priority buckets ----------
+  const bucketIndexOf = taskId => buckets.indexOf(taskId);
+
+  function pruneBuckets() {
+    let changed = false;
+    buckets = buckets.map(id => {
+      if (!id) return null;
+      const t = resolveTask(id);
+      if (!t || t.done) { changed = true; return null; }   // finished or gone: slot frees up
+      return id;
+    });
+    if (changed) saveBuckets();
+  }
+
+  function assignBucket(index, taskId) {
+    const was = bucketIndexOf(taskId);
+    if (was === index) return;
+    if (was !== -1) buckets[was] = null;                    // a task sits in one bucket only
+    buckets[index] = taskId;
+    saveBuckets();
+    render();
+  }
+
+  function clearBucket(index) {
+    buckets[index] = null;
+    saveBuckets();
+    render();
+  }
+
+  function removeBucket(index) {
+    if (buckets.length <= 1) return;
+    buckets.splice(index, 1);
+    saveBuckets();
+    render();
+  }
+
+  function addBucket() {
+    if (buckets.length >= MAX_BUCKETS) return;
+    buckets.push(null);
+    saveBuckets();
+    render();
+  }
+
+  function moveBucket(from, to) {
+    if (from === to || from < 0 || to < 0) return;
+    const [item] = buckets.splice(from, 1);
+    buckets.splice(to, 0, item);
+    saveBuckets();
+    render();
+  }
+
+  // Pointer-based dragging, so it works with both a mouse and a touchscreen.
+  function startDrag(payload, ev) {
+    if (dragItem) return;
+    ev.preventDefault();
+    const ghost = document.createElement("div");
+    ghost.className = "drag-ghost";
+    ghost.textContent = payload.text;
+    ghost.style.left = ev.clientX + 12 + "px";
+    ghost.style.top = ev.clientY + 12 + "px";
+    document.body.append(ghost);
+    dragItem = { ...payload, ghost };
+    if (payload.kind === "bucket") {
+      const el = bucketsEl.children[payload.index];
+      if (el) el.classList.add("lifted");
+    }
+    window.addEventListener("pointermove", onDragMove);
+    window.addEventListener("pointerup", onDragEnd);
+    window.addEventListener("pointercancel", onDragEnd);
+  }
+
+  function bucketUnder(x, y) {
+    const el = document.elementFromPoint(x, y);
+    const bucket = el && el.closest ? el.closest(".bucket") : null;
+    if (!bucket || bucket.parentElement !== bucketsEl) return -1;
+    return [...bucketsEl.children].indexOf(bucket);
+  }
+
+  function onDragMove(ev) {
+    if (!dragItem) return;
+    dragItem.ghost.style.left = ev.clientX + 12 + "px";
+    dragItem.ghost.style.top = ev.clientY + 12 + "px";
+    const over = bucketUnder(ev.clientX, ev.clientY);
+    [...bucketsEl.children].forEach((el, i) => el.classList.toggle("over", i === over && i !== dragItem.index));
+  }
+
+  function onDragEnd(ev) {
+    if (!dragItem) return;
+    const drop = bucketUnder(ev.clientX, ev.clientY);
+    const payload = dragItem;
+    dragItem.ghost.remove();
+    dragItem = null;
+    window.removeEventListener("pointermove", onDragMove);
+    window.removeEventListener("pointerup", onDragEnd);
+    window.removeEventListener("pointercancel", onDragEnd);
+    if (drop !== -1) {
+      if (payload.kind === "task") assignBucket(drop, payload.taskId);
+      else moveBucket(payload.index, drop);
+    } else {
+      render();
+    }
+    if (renderQueued) { renderQueued = false; render(); }
+  }
+
+  function renderBuckets() {
+    bucketsEl.textContent = "";
+    buckets.forEach((taskId, i) => {
+      const t = taskId ? resolveTask(taskId) : null;
+      const el = document.createElement("div");
+      el.className = "bucket" + (t ? " filled" : " empty");
+
+      const num = document.createElement("span");
+      num.className = "num";
+      num.textContent = String(i + 1);
+      el.append(num);
+
+      if (t) {
+        const check = document.createElement("button");
+        check.className = "check";
+        check.innerHTML = CHECK_SVG;
+        check.setAttribute("aria-label", "Mark done: " + t.text);
+        check.addEventListener("pointerdown", e => e.stopPropagation());
+        check.addEventListener("click", () => {
+          toggleTask(t.garden, { id: taskId, text: t.text, done: t.done });
+        });
+        el.append(check);
+
+        const body = document.createElement("div");
+        body.className = "body";
+        const title = document.createElement("div");
+        title.className = "title";
+        title.textContent = t.text;
+        const src = document.createElement("div");
+        src.className = "src";
+        src.textContent = t.gardenLabel;
+        body.append(title, src);
+        el.append(body);
+
+        const clear = document.createElement("button");
+        clear.className = "clear";
+        clear.textContent = "×";
+        clear.title = "Take out of the bucket";
+        clear.setAttribute("aria-label", "Take out of bucket " + (i + 1) + ": " + t.text);
+        clear.addEventListener("pointerdown", e => e.stopPropagation());
+        clear.addEventListener("click", () => clearBucket(i));
+        el.append(clear);
+
+        el.title = "Drag to re-rank";
+        el.addEventListener("pointerdown", e => startDrag({ kind: "bucket", index: i, text: t.text }, e));
+      } else {
+        const body = document.createElement("div");
+        body.className = "body";
+        const ph = document.createElement("div");
+        ph.className = "placeholder";
+        ph.textContent = "Drop a task";
+        body.append(ph);
+        el.append(body);
+
+        if (buckets.length > 1) {
+          const del = document.createElement("button");
+          del.className = "clear";
+          del.textContent = "×";
+          del.title = "Remove this bucket";
+          del.setAttribute("aria-label", "Remove bucket " + (i + 1));
+          del.addEventListener("pointerdown", e => e.stopPropagation());
+          del.addEventListener("click", () => removeBucket(i));
+          el.append(del);
+        }
+      }
+      bucketsEl.append(el);
+    });
+
+    if (buckets.length < MAX_BUCKETS) {
+      const add = document.createElement("button");
+      add.className = "add";
+      add.textContent = "+ bucket";
+      add.addEventListener("click", addBucket);
+      bucketsEl.append(add);
+    }
+    if (buckets.every(b => !b)) {
+      const tip = document.createElement("div");
+      tip.className = "tip";
+      tip.textContent = "Drag a task by its handle into a bucket to rank what matters today.";
+      bucketsEl.append(tip);
+    }
+  }
+
   // ---------- task operations (same shape for both galaxies) ----------
   function taskTable(garden) { return garden.kind === "custom" ? "oasis_tasks" : "tasks"; }
   function taskRowFor(garden, id) {
@@ -958,7 +1330,7 @@ notify pgrst, 'reload schema';
 
   // ---------- dom ----------
   const $ = id => document.getElementById(id);
-  const galaxiesEl = $("galaxies"), chipsEl = $("chips"), listEl = $("list"), listLabel = $("list-label"),
+  const galaxiesEl = $("galaxies"), bucketsEl = $("buckets"), chipsEl = $("chips"), listEl = $("list"), listLabel = $("list-label"),
         tendedEl = $("tended-list"), tendedLabel = $("tended-label"), emptyEl = $("empty"),
         countsEl = $("counts"), nameEl = $("garden-name"), form = $("add-form"), input = $("task-input"),
         actionsEl = $("actions"), syncEl = $("sync"), syncText = $("sync-text");
@@ -978,7 +1350,29 @@ notify pgrst, 'reload schema';
 
   function taskRow(garden, t) {
     const li = document.createElement("li");
-    li.className = t.done ? "done" : "";
+    const inBucket = bucketIndexOf(t.id);
+    li.className = (t.done ? "done" : "") + (inBucket !== -1 ? " bucketed" : "");
+
+    if (!t.done) {
+      const grip = document.createElement("span");
+      grip.className = "grip";
+      grip.textContent = "⠿";
+      grip.tabIndex = 0;
+      grip.title = inBucket !== -1
+        ? "In bucket " + (inBucket + 1) + " — drag to another bucket"
+        : "Drag into a bucket";
+      grip.setAttribute("role", "button");
+      grip.setAttribute("aria-label", "Drag into a bucket: " + t.text);
+      grip.addEventListener("pointerdown", e => startDrag({ kind: "task", taskId: t.id, text: t.text }, e));
+      // keyboard path: send to the first free bucket
+      grip.addEventListener("keydown", e => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        const free = buckets.indexOf(null);
+        assignBucket(free === -1 ? buckets.length - 1 : free, t.id);
+      });
+      li.append(grip);
+    }
 
     const check = document.createElement("button");
     check.className = "check";
@@ -1117,6 +1511,9 @@ notify pgrst, 'reload schema';
   }
 
   function render() {
+    if (dragItem) { renderQueued = true; return; }   // don't rebuild under a drag in progress
+    pruneBuckets();
+    renderBuckets();
     const galaxy = currentGalaxy();
     if (galaxy.id !== view.galaxy) { view.galaxy = galaxy.id; saveView(); }
     const gardens = gardensFor(galaxy);
