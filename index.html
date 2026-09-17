@@ -406,19 +406,12 @@
 
   .focus-bucket .who { cursor: grab; }
   .focus-bucket .who .t { font-size: 0.95rem; line-height: 1.3; font-weight: 600; }
-  .focus-bucket .who .g {
-    font-size: 0.62rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.66);
-    margin-top: 2px;
-  }
 
   .focus-bucket .clock {
     display: flex;
-    align-items: baseline;
-    gap: 9px;
-    margin-top: 8px;
+    align-items: flex-end;
+    gap: 12px;
+    margin-top: 6px;
   }
   .focus-bucket .elapsed {
     font-family: "Marcellus", Georgia, serif;
@@ -427,7 +420,28 @@
     font-variant-numeric: tabular-nums;
   }
   .focus-bucket.paused .elapsed { color: rgba(255, 255, 255, 0.62); }
-  .focus-bucket .total { font-size: 0.7rem; color: rgba(255, 255, 255, 0.66); font-variant-numeric: tabular-nums; }
+  .focus-bucket .meter {
+    position: relative;
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(0, 0, 0, 0.2);
+    margin-bottom: 7px;
+  }
+  .focus-bucket .meter .fill {
+    height: 100%;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.8);
+    transition: width 0.4s ease;
+  }
+  .focus-bucket .meter .logged {
+    position: absolute;
+    right: 0; top: 7px;
+    font-size: 0.62rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-variant-numeric: tabular-nums;
+  }
+  @media (prefers-reduced-motion: reduce) { .focus-bucket .meter .fill { transition: none; } }
 
   .focus-bucket .controls { display: flex; gap: 8px; margin: 10px 0 4px; }
   .focus-bucket .controls button {
@@ -583,12 +597,6 @@
 
 
   /* ---- stickies in the bucket ---- */
-  .focus-bucket .bucket-hint {
-    font-size: 0.72rem;
-    color: rgba(255, 255, 255, 0.58);
-    font-style: italic;
-    padding: 6px 0 2px;
-  }
   .stickies {
     display: flex;
     flex-wrap: wrap;
@@ -1323,7 +1331,7 @@ notify pgrst, 'reload schema';
     const seqAtStart = writeSeq;
     try {
       const [t, s, g, gd, ot, focusProbe] = await Promise.allSettled([
-        api("tasks?select=id,title,category,done,done_at,sort_order,roadmap,active_started_at,time_logged_seconds&kind=eq.task&order=sort_order.desc&limit=5000"),
+        api("tasks?select=id,title,category,done,done_at,sort_order,roadmap,active_started_at,time_logged_seconds,estimated_minutes&kind=eq.task&order=sort_order.desc&limit=5000"),
         api("pomodoro_sessions?select=id,started_at,ended_at,planned_minutes&kind=eq.work&order=started_at.desc&limit=5000"),
         api("oasis_galaxies?select=id,name,sort_order&order=sort_order.asc"),
         api("oasis_gardens?select=id,galaxy_id,name,sort_order&order=sort_order.asc&limit=5000"),
@@ -1509,6 +1517,18 @@ notify pgrst, 'reload schema';
     if (m < 60) return m + " min logged";
     return (Math.round(m / 6) / 10) + " h logged";
   }
+
+  // the bar fills against Foquito's estimate for the task when it has one,
+  // otherwise against a two-hour stretch
+  const estimateOf = taskId => {
+    const row = data.tasks.find(r => r.id === taskId);
+    return row && row.estimated_minutes ? row.estimated_minutes : null;
+  };
+  const targetSeconds = taskId => (estimateOf(taskId) || 120) * 60;
+  const shortMins = sec => {
+    const m = Math.round(sec / 60);
+    return m < 60 ? m + "m" : (Math.round(m / 6) / 10) + "h";
+  };
 
   function startTimer(taskId) {
     if (isRunning(taskId)) return;
@@ -1854,22 +1874,27 @@ notify pgrst, 'reload schema';
 
     const body = document.createElement("div");
     body.className = "body";
+    body.title = "Right-click for notes and steps";
 
     const who = document.createElement("div");
     who.className = "who";
     const t = document.createElement("div");
     t.className = "t";
-    const g = document.createElement("div");
-    g.className = "g";
-    who.append(t, g);
+    who.append(t);
 
     const clock = document.createElement("div");
     clock.className = "clock";
     const elapsed = document.createElement("div");
     elapsed.className = "elapsed";
-    const total = document.createElement("div");
-    total.className = "total";
-    clock.append(elapsed, total);
+    // time already banked on this task, as a quiet bar rather than a sentence
+    const meter = document.createElement("div");
+    meter.className = "meter";
+    const fill = document.createElement("div");
+    fill.className = "fill";
+    const logged = document.createElement("span");
+    logged.className = "logged";
+    meter.append(fill, logged);
+    clock.append(elapsed, meter);
 
     const controls = document.createElement("div");
     controls.className = "controls";
@@ -1925,7 +1950,7 @@ notify pgrst, 'reload schema';
 
     document.body.append(el);
     raiseCard(el);
-    return { el, refs: { badge, t, g, elapsed, total, toggle, scroll } };
+    return { el, refs: { badge, t, elapsed, fill, logged, toggle, scroll } };
   }
 
   // What's in the bucket: one sticky per note or step. Nothing is added until
@@ -1936,13 +1961,7 @@ notify pgrst, 'reload schema';
     const items = parseRoadmap(focusOf(taskId).roadmap);
     refs.scroll.textContent = "";
 
-    if (!items.length) {
-      const hint = document.createElement("div");
-      hint.className = "bucket-hint";
-      hint.textContent = "Right-click for notes and steps";
-      refs.scroll.append(hint);
-      return;
-    }
+    if (!items.length) return;
 
     const wrap = document.createElement("div");
     wrap.className = "stickies";
@@ -2114,7 +2133,6 @@ notify pgrst, 'reload schema';
       entry.el.style.setProperty("--pail", "var(--pail-" + (((slot === -1 ? i : slot) % 8) + 1) + ")");
       entry.refs.badge.textContent = slot === -1 ? "•" : String(slot + 1);
       entry.refs.t.textContent = info.text;
-      entry.refs.g.textContent = info.gardenLabel;
       const running = isRunning(taskId);
       entry.el.classList.toggle("paused", !running);
       entry.refs.toggle.textContent = running ? "Pause" : "Start";
@@ -2135,9 +2153,12 @@ notify pgrst, 'reload schema';
     for (const [taskId, entry] of cardEls) {
       const f = focusOf(taskId);
       entry.refs.elapsed.textContent = fmtClock(f.active_started_at ? elapsedOf(f) : f.time_logged_seconds);
-      entry.refs.total.textContent = f.active_started_at
-        ? "this session · " + fmtTotal(totalOf(f)) + " in all"
-        : fmtTotal(f.time_logged_seconds);
+      const banked = totalOf(f);
+      const target = targetSeconds(taskId);
+      entry.refs.fill.style.width = Math.min(100, (banked / target) * 100).toFixed(1) + "%";
+      entry.refs.logged.textContent = shortMins(banked);
+      entry.refs.fill.parentElement.title = fmtTotal(banked) +
+        (estimateOf(taskId) ? " of " + estimateOf(taskId) + " min planned" : "");
     }
     for (const el of bucketsEl.querySelectorAll(".bucket")) {
       const face = el.querySelector(".pail-face");
