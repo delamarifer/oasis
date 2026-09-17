@@ -288,6 +288,234 @@
     .bucket { flex: 0 0 165px; }
   }
 
+  /* ---- focus cards ---- */
+  .focus-card {
+    position: fixed;
+    z-index: 12;
+    width: 330px;
+    max-width: calc(100vw - 24px);
+    max-height: min(560px, calc(100vh - 60px));
+    display: flex;
+    flex-direction: column;
+    background: var(--panel);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--pail);
+    border-radius: 14px;
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.16);
+    overflow: hidden;
+  }
+  .focus-card header {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 12px 8px;
+    cursor: grab;
+    touch-action: none;
+  }
+  .focus-card.dragging header { cursor: grabbing; }
+  .focus-card .badge {
+    flex: none;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--pail);
+    color: var(--ground);
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .focus-card .who { flex: 1; min-width: 0; }
+  .focus-card .who .t { font-size: 0.95rem; line-height: 1.3; }
+  .focus-card .who .g {
+    font-size: 0.64rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-top: 2px;
+  }
+  .focus-card .close {
+    flex: none;
+    background: none;
+    border: none;
+    color: var(--ink-faint);
+    font-size: 1rem;
+    line-height: 1;
+    padding: 2px 5px;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  .focus-card .close:hover { color: var(--ink); }
+  .focus-card .close:focus-visible { outline: 2px solid var(--accent); }
+
+  .focus-card .clock {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 0 14px 10px;
+  }
+  .focus-card .elapsed {
+    font-family: "Marcellus", Georgia, serif;
+    font-size: 2rem;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  .focus-card.paused .elapsed { color: var(--ink-faint); }
+  .focus-card .total {
+    font-size: 0.72rem;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .focus-card .controls {
+    display: flex;
+    gap: 8px;
+    padding: 0 14px 12px;
+  }
+  .focus-card .controls button {
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--ink-soft);
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 5px 14px;
+    cursor: pointer;
+  }
+  .focus-card .controls button:hover { border-color: var(--accent); color: var(--accent); }
+  .focus-card .controls button.primary { background: var(--accent); border-color: var(--accent); color: var(--ground); }
+  .focus-card .controls button.primary:hover { color: var(--ground); opacity: 0.9; }
+  .focus-card .controls button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .focus-card .scroll {
+    overflow-y: auto;
+    padding: 0 14px 14px;
+  }
+  .focus-card .lbl {
+    font-size: 0.66rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 6px 0 4px;
+  }
+  .steps { list-style: none; margin: 0; padding: 0; }
+  .steps li {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 5px 0;
+    border: none;
+  }
+  .steps .check { width: 16px; height: 16px; margin-top: 2px; }
+  .steps .step-text {
+    flex: 1;
+    font-size: 0.88rem;
+    line-height: 1.35;
+    cursor: text;
+    border-radius: 4px;
+    word-break: break-word;
+  }
+  .steps li.done .step-text { color: var(--ink-faint); text-decoration: line-through; }
+  .steps .step-input {
+    flex: 1;
+    min-width: 0;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--accent);
+    font: inherit;
+    font-size: 0.88rem;
+    color: var(--ink);
+    padding: 0 0 2px;
+  }
+  .steps .step-input:focus { outline: none; }
+  .steps .drop {
+    flex: none;
+    background: none;
+    border: none;
+    color: var(--ink-faint);
+    cursor: pointer;
+    font-size: 0.85rem;
+    line-height: 1;
+    padding: 2px 4px;
+    opacity: 0;
+    border-radius: 4px;
+  }
+  .steps li:hover .drop, .steps .drop:focus-visible { opacity: 1; }
+  .steps .drop:hover { color: var(--danger); }
+
+  .add-step {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    margin-top: 2px;
+  }
+  .add-step input {
+    flex: 1;
+    min-width: 0;
+    background: none;
+    border: none;
+    font: inherit;
+    font-size: 0.85rem;
+    color: var(--ink);
+    padding: 6px 0;
+  }
+  .add-step input:focus { outline: none; }
+  .add-step:focus-within { border-bottom-color: var(--accent); }
+
+  .focus-card textarea {
+    width: 100%;
+    min-height: 88px;
+    resize: vertical;
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    padding: 9px 10px;
+  }
+  .focus-card textarea:focus { outline: none; border-color: var(--accent); }
+  .focus-card .saving {
+    font-size: 0.66rem;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    min-height: 1em;
+    margin-top: 4px;
+  }
+  .focus-card .upgrade {
+    background: none;
+    border: none;
+    padding: 0;
+    margin-top: 6px;
+    font-size: 0.7rem;
+    color: var(--ink-faint);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .focus-card .upgrade:hover { color: var(--accent); }
+
+  /* the number now hovers beside the pail, leaving its face for live text */
+  .bucket .num {
+    position: absolute;
+    top: 2px; left: 10px;
+    width: 19px; height: 19px;
+    border-radius: 50%;
+    background: var(--ground);
+    border: 1.5px solid var(--pail);
+    color: var(--ink-soft);
+    font-size: 0.68rem;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .bucket.filled { cursor: pointer; }
+  .bucket.running .num { background: var(--pail); color: var(--ground); border-color: var(--pail); }
+
   .grip {
     flex: none;
     color: var(--ink-faint);
@@ -723,7 +951,7 @@
 <div class="overlay soft" id="galaxy-setup" hidden role="dialog" aria-labelledby="galaxy-setup-title">
   <div class="card">
     <h2 id="galaxy-setup-title">Make room for new galaxies</h2>
-    <p>Your own galaxies need three small tables in your Foquito database. This is a one-time step.</p>
+    <p id="galaxy-setup-text">Your own galaxies need three small tables in your Foquito database. This is a one-time step.</p>
     <ol class="steps">
       <li><span class="n">1</span><span class="txt">Copy the setup code</span>
         <button class="btn" id="copy-sql">Copy</button></li>
@@ -769,7 +997,19 @@
   const CACHE_KEY = "oasis-live-cache-v2";
   const VIEW_KEY = "oasis-live-view";
   const BUCKETS_KEY = "oasis-live-buckets";
+  const CARDS_KEY = "oasis-live-cards";
+  const CARDPOS_KEY = "oasis-live-cardpos";
+  const LOCALFOCUS_KEY = "oasis-live-focus";
   const MAX_BUCKETS = 8;
+
+  const FOCUS_SQL = `-- Focus mode for Oasis galaxy tasks: notes/sub-steps and a work timer.
+alter table oasis_tasks
+  add column if not exists roadmap text,
+  add column if not exists active_started_at timestamptz,
+  add column if not exists time_logged_seconds integer not null default 0;
+
+notify pgrst, 'reload schema';
+`;
   const POLL_MS = 25000;
   const FOQUITO = "foquito";
   const FOCUS_ID = "focus:sessions";
@@ -869,6 +1109,15 @@ notify pgrst, 'reload schema';
   let dragItem = null;            // { kind: "task"|"bucket", taskId?, index?, ghost }
   let renderQueued = false;
 
+  // focus cards: several can be open at once, one per task being worked on
+  let openCards = (readJSON(CARDS_KEY) || []).filter(id => typeof id === "string");
+  let cardPos = readJSON(CARDPOS_KEY) || {};
+  let oasisFocusReady = null;     // do oasis_tasks have the focus columns yet?
+  let localFocus = readJSON(LOCALFOCUS_KEY) || {};   // fallback while they don't
+  const saveCards = () => writeJSON(CARDS_KEY, openCards);
+  const saveCardPos = () => writeJSON(CARDPOS_KEY, cardPos);
+  const saveLocalFocus = () => writeJSON(LOCALFOCUS_KEY, localFocus);
+
   // ---------- api ----------
   async function api(path, opts = {}) {
     const res = await fetch(SUPABASE_URL + "/rest/v1/" + path, {
@@ -894,13 +1143,16 @@ notify pgrst, 'reload schema';
     refreshing = true;
     const seqAtStart = writeSeq;
     try {
-      const [t, s, g, gd, ot] = await Promise.allSettled([
-        api("tasks?select=id,title,category,done,done_at,sort_order&kind=eq.task&order=sort_order.desc&limit=5000"),
+      const [t, s, g, gd, ot, focusProbe] = await Promise.allSettled([
+        api("tasks?select=id,title,category,done,done_at,sort_order,roadmap,active_started_at,time_logged_seconds&kind=eq.task&order=sort_order.desc&limit=5000"),
         api("pomodoro_sessions?select=id,started_at,ended_at,planned_minutes&kind=eq.work&order=started_at.desc&limit=5000"),
         api("oasis_galaxies?select=id,name,sort_order&order=sort_order.asc"),
         api("oasis_gardens?select=id,galaxy_id,name,sort_order&order=sort_order.asc&limit=5000"),
-        api("oasis_tasks?select=id,garden_id,title,done,done_at,sort_order&order=sort_order.asc&limit=10000")
+        api("oasis_tasks?select=*&order=sort_order.asc&limit=10000"),
+        api("oasis_tasks?select=roadmap&limit=1")
       ]);
+      if (focusProbe.status === "fulfilled") oasisFocusReady = true;
+      else if (galaxiesReady !== false) oasisFocusReady = false;
       // a write landed while we were reading: this snapshot may predate it
       if (writeSeq !== seqAtStart || inflight > 0) { refreshQueued = true; return; }
       if (t.status === "rejected") throw t.reason;
@@ -1029,6 +1281,91 @@ notify pgrst, 'reload schema';
     return null;
   }
 
+  // ---------- focus data: notes, sub-steps, work timer ----------
+  // Foquito tasks carry roadmap/active_started_at/time_logged_seconds already.
+  // Galaxy tasks only do once migration 009 has run; until then we keep the
+  // same fields in this browser so the feature still works.
+  function focusInDb(taskId) {
+    if (data.tasks.some(r => r.id === taskId)) return true;
+    return oasisFocusReady === true;
+  }
+  function focusOf(taskId) {
+    const row = data.tasks.find(r => r.id === taskId) ||
+      (oasisFocusReady === true ? data.otasks.find(r => r.id === taskId) : null);
+    const src = row || localFocus[taskId] || {};
+    return {
+      roadmap: src.roadmap || "",
+      active_started_at: src.active_started_at || null,
+      time_logged_seconds: src.time_logged_seconds || 0
+    };
+  }
+  function setFocus(taskId, patch, failMsg) {
+    const inDb = focusInDb(taskId);
+    const row = (data.tasks.find(r => r.id === taskId) || data.otasks.find(r => r.id === taskId));
+    if (row) Object.assign(row, patch);                 // optimistic either way
+    if (!inDb) {
+      localFocus[taskId] = { ...focusOf(taskId), ...patch };
+      saveLocalFocus();
+      return Promise.resolve();
+    }
+    const table = data.tasks.some(r => r.id === taskId) ? "tasks" : "oasis_tasks";
+    return mutate(() => api(table + "?id=eq." + taskId,
+      { method: "PATCH", body: JSON.stringify(patch) }), failMsg || "Change didn't save");
+  }
+
+  const elapsedOf = f => f.active_started_at
+    ? Math.max(0, Math.round((Date.now() - new Date(f.active_started_at).getTime()) / 1000))
+    : 0;
+  const totalOf = f => f.time_logged_seconds + elapsedOf(f);
+  const isRunning = taskId => !!focusOf(taskId).active_started_at;
+
+  function fmtClock(sec) {
+    const s = Math.max(0, Math.round(sec));
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = s % 60;
+    const pad = n => String(n).padStart(2, "0");
+    return h ? h + ":" + pad(m) + ":" + pad(r) : pad(m) + ":" + pad(r);
+  }
+  function fmtTotal(sec) {
+    const m = Math.round(sec / 60);
+    if (m < 60) return m + " min logged";
+    return (Math.round(m / 6) / 10) + " h logged";
+  }
+
+  function startTimer(taskId) {
+    if (isRunning(taskId)) return;
+    setFocus(taskId, { active_started_at: new Date().toISOString() }, "Timer didn't start");
+  }
+  function stopTimer(taskId) {
+    const f = focusOf(taskId);
+    if (!f.active_started_at) return;
+    setFocus(taskId, {
+      active_started_at: null,
+      time_logged_seconds: f.time_logged_seconds + elapsedOf(f)
+    }, "Timer didn't stop");
+  }
+
+  // roadmap text doubles as sub-steps: lines like "- [ ] step" / "- [x] step",
+  // with anything else kept as free notes. Foquito shows the same field.
+  const STEP_RE = /^- \[([ xX])\] ?(.*)$/;
+  function parseRoadmap(text) {
+    const steps = [], notes = [];
+    for (const line of (text || "").split("\n")) {
+      const m = line.match(STEP_RE);
+      if (m) steps.push({ done: m[1].toLowerCase() === "x", text: m[2] });
+      else notes.push(line);
+    }
+    return { steps, notes: notes.join("\n").replace(/^\n+|\n+$/g, "") };
+  }
+  function serializeRoadmap(steps, notes) {
+    const lines = steps.map(s => "- [" + (s.done ? "x" : " ") + "] " + s.text);
+    const body = (notes || "").trim();
+    if (body) { if (lines.length) lines.push(""); lines.push(body); }
+    return lines.join("\n");
+  }
+  function writeRoadmap(taskId, steps, notes) {
+    setFocus(taskId, { roadmap: serializeRoadmap(steps, notes) }, "Notes didn't save");
+  }
+
   // ---------- priority buckets ----------
   const bucketIndexOf = taskId => buckets.indexOf(taskId);
 
@@ -1090,7 +1427,7 @@ notify pgrst, 'reload schema';
     ghost.style.left = ev.clientX + 12 + "px";
     ghost.style.top = ev.clientY + 12 + "px";
     document.body.append(ghost);
-    dragItem = { ...payload, ghost };
+    dragItem = { ...payload, ghost, moved: 0, lastX: ev.clientX, lastY: ev.clientY };
     if (payload.kind === "bucket") {
       const el = bucketsEl.children[payload.index];
       if (el) el.classList.add("lifted");
@@ -1109,6 +1446,10 @@ notify pgrst, 'reload schema';
 
   function onDragMove(ev) {
     if (!dragItem) return;
+    dragItem.moved = (dragItem.moved || 0) +
+      Math.abs(ev.clientX - dragItem.lastX) + Math.abs(ev.clientY - dragItem.lastY);
+    dragItem.lastX = ev.clientX;
+    dragItem.lastY = ev.clientY;
     dragItem.ghost.style.left = ev.clientX + 12 + "px";
     dragItem.ghost.style.top = ev.clientY + 12 + "px";
     const over = bucketUnder(ev.clientX, ev.clientY);
@@ -1124,7 +1465,11 @@ notify pgrst, 'reload schema';
     window.removeEventListener("pointermove", onDragMove);
     window.removeEventListener("pointerup", onDragEnd);
     window.removeEventListener("pointercancel", onDragEnd);
-    if (drop !== -1) {
+    const tapped = (payload.moved || 0) < 6;
+    if (payload.kind === "bucket" && tapped && payload.taskId) {
+      openCard(payload.taskId, true);          // a tap on a full pail: focus it and start the clock
+      render();
+    } else if (drop !== -1) {
       if (payload.kind === "task") assignBucket(drop, payload.taskId);
       else moveBucket(payload.index, drop);
     } else {
@@ -1136,7 +1481,7 @@ notify pgrst, 'reload schema';
   // A garden pail: tapered ribbed body, wire handle with a wooden grip, and a
   // sprout in the ones that are holding something. Shading is plain black/white
   // washes over the slot color, so any pail color works in either theme.
-  function pailSVG(number, filled) {
+  function pailSVG(filled) {
     return '<svg class="pail" viewBox="0 0 84 82" aria-hidden="true">' +
       '<ellipse cx="42" cy="75" rx="27" ry="4" fill="#000" opacity="0.10"/>' +
       '<path d="M15 26 Q42 -1 69 26" fill="none" stroke="var(--ink-faint)" stroke-width="2.4" stroke-linecap="round"/>' +
@@ -1153,8 +1498,8 @@ notify pgrst, 'reload schema';
           '<ellipse cx="32.5" cy="11.5" rx="4.6" ry="2.7" transform="rotate(-28 32.5 11.5)" fill="var(--leaf)"/>' +
           '<ellipse cx="45" cy="16" rx="4.2" ry="2.5" transform="rotate(24 45 16)" fill="var(--leaf-2)"/></g>'
         : "") +
-      '<text x="42" y="56" text-anchor="middle" font-family="Mulish, sans-serif" font-size="15" ' +
-      'font-weight="700" fill="var(--ground)" opacity="0.92">' + number + "</text>" +
+      '<text class="pail-face" x="42" y="56" text-anchor="middle" font-family="Mulish, sans-serif" ' +
+      'font-size="14" font-weight="700" fill="var(--ground)" opacity="0.94"></text>' +
       "</svg>";
   }
 
@@ -1165,7 +1510,13 @@ notify pgrst, 'reload schema';
       const el = document.createElement("div");
       el.className = "bucket" + (t ? " filled" : " empty");
       el.style.setProperty("--pail", "var(--pail-" + ((i % 8) + 1) + ")");
-      el.insertAdjacentHTML("afterbegin", pailSVG(i + 1, !!t));
+      el.insertAdjacentHTML("afterbegin", pailSVG(!!t));
+      if (taskId) el.dataset.taskId = taskId;
+
+      const num = document.createElement("span");
+      num.className = "num";
+      num.textContent = String(i + 1);
+      el.append(num);
 
       if (t) {
         const check = document.createElement("button");
@@ -1198,8 +1549,8 @@ notify pgrst, 'reload schema';
         clear.addEventListener("click", () => clearBucket(i));
         el.append(clear);
 
-        el.title = "Drag to re-rank";
-        el.addEventListener("pointerdown", e => startDrag({ kind: "bucket", index: i, text: t.text }, e));
+        el.title = "Click to focus · drag to re-rank";
+        el.addEventListener("pointerdown", e => startDrag({ kind: "bucket", index: i, text: t.text, taskId }, e));
       } else {
         const body = document.createElement("div");
         body.className = "body";
@@ -1237,6 +1588,318 @@ notify pgrst, 'reload schema';
       bucketsEl.append(tip);
     }
   }
+
+  // ---------- focus cards ----------
+  const cardEls = new Map();      // taskId -> { el, sig }
+
+  function openCard(taskId, alsoStart) {
+    if (!openCards.includes(taskId)) {
+      openCards.push(taskId);
+      saveCards();
+    }
+    if (alsoStart) startTimer(taskId);
+    renderCards();
+    const entry = cardEls.get(taskId);
+    if (entry) raiseCard(entry.el);
+  }
+  function closeCard(taskId) {
+    openCards = openCards.filter(id => id !== taskId);
+    saveCards();
+    stopTimer(taskId);            // closing a card banks the time
+    renderCards();
+    renderBuckets();
+  }
+
+  let cardZ = 20;
+  const raiseCard = el => { el.style.zIndex = String(++cardZ); };
+
+  function defaultPos(i) {
+    const w = 330;
+    const wide = window.innerWidth > 760;
+    // centre of the open space: left of the task panel on wide screens,
+    // and always clear of the bucket strip above
+    const x = Math.max(12, Math.round((wide ? window.innerWidth - 400 : window.innerWidth) / 2 - w / 2) + i * 30);
+    const strip = bucketsEl.getBoundingClientRect().bottom;
+    const top = Math.max(strip + 14, 80);
+    const y = Math.min(window.innerHeight - 140, top + i * 26);
+    return { x, y };
+  }
+
+  function buildCard(taskId, index) {
+    const el = document.createElement("section");
+    el.className = "focus-card";
+    el.dataset.id = taskId;
+    const pos = cardPos[taskId] || defaultPos(index);
+    el.style.left = pos.x + "px";
+    el.style.top = pos.y + "px";
+    el.addEventListener("pointerdown", () => raiseCard(el), true);
+
+    const head = document.createElement("header");
+    const badge = document.createElement("span");
+    badge.className = "badge";
+    const who = document.createElement("div");
+    who.className = "who";
+    const t = document.createElement("div");
+    t.className = "t";
+    const g = document.createElement("div");
+    g.className = "g";
+    who.append(t, g);
+    const close = document.createElement("button");
+    close.className = "close";
+    close.textContent = "×";
+    close.title = "Close and bank the time";
+    close.setAttribute("aria-label", "Close focus card");
+    close.addEventListener("click", () => closeCard(taskId));
+    close.addEventListener("pointerdown", e => e.stopPropagation());
+    head.append(badge, who, close);
+
+    // dragging the card by its header
+    head.addEventListener("pointerdown", e => {
+      if (e.target.closest("button")) return;
+      const rect = el.getBoundingClientRect();
+      const offX = e.clientX - rect.left, offY = e.clientY - rect.top;
+      el.classList.add("dragging");
+      head.setPointerCapture(e.pointerId);
+      const move = ev => {
+        const x = Math.min(window.innerWidth - 60, Math.max(-el.offsetWidth + 80, ev.clientX - offX));
+        const y = Math.min(window.innerHeight - 40, Math.max(0, ev.clientY - offY));
+        el.style.left = x + "px";
+        el.style.top = y + "px";
+      };
+      const up = () => {
+        el.classList.remove("dragging");
+        cardPos[taskId] = { x: parseInt(el.style.left, 10), y: parseInt(el.style.top, 10) };
+        saveCardPos();
+        head.removeEventListener("pointermove", move);
+        head.removeEventListener("pointerup", up);
+      };
+      head.addEventListener("pointermove", move);
+      head.addEventListener("pointerup", up);
+    });
+
+    const clock = document.createElement("div");
+    clock.className = "clock";
+    const elapsed = document.createElement("div");
+    elapsed.className = "elapsed";
+    const total = document.createElement("div");
+    total.className = "total";
+    clock.append(elapsed, total);
+
+    const controls = document.createElement("div");
+    controls.className = "controls";
+    const toggle = document.createElement("button");
+    toggle.className = "primary";
+    toggle.addEventListener("click", () => {
+      isRunning(taskId) ? stopTimer(taskId) : startTimer(taskId);
+      renderCards();
+      renderBuckets();
+    });
+    const doneBtn = document.createElement("button");
+    doneBtn.textContent = "Mark done";
+    doneBtn.addEventListener("click", () => {
+      const info = resolveTask(taskId);
+      if (!info) return;
+      stopTimer(taskId);
+      openCards = openCards.filter(id => id !== taskId);
+      saveCards();
+      toggleTask(info.garden, { id: taskId, text: info.text, done: info.done });
+    });
+    controls.append(toggle, doneBtn);
+
+    const scroll = document.createElement("div");
+    scroll.className = "scroll";
+    el.append(head, clock, controls, scroll);
+    document.body.append(el);
+    raiseCard(el);
+    return { el, refs: { badge, t, g, elapsed, total, toggle, scroll } };
+  }
+
+  function fillCardBody(taskId, refs) {
+    const { steps, notes } = parseRoadmap(focusOf(taskId).roadmap);
+    refs.scroll.textContent = "";
+
+    const stepLabel = document.createElement("div");
+    stepLabel.className = "lbl";
+    stepLabel.textContent = steps.length
+      ? "Steps · " + steps.filter(s => s.done).length + "/" + steps.length
+      : "Steps";
+    refs.scroll.append(stepLabel);
+
+    const ul = document.createElement("ul");
+    ul.className = "steps";
+    steps.forEach((s, i) => {
+      const li = document.createElement("li");
+      if (s.done) li.className = "done";
+      const check = document.createElement("button");
+      check.className = "check";
+      check.innerHTML = CHECK_SVG;
+      check.setAttribute("aria-pressed", String(s.done));
+      check.setAttribute("aria-label", (s.done ? "Undo step: " : "Finish step: ") + s.text);
+      check.addEventListener("click", () => {
+        steps[i].done = !steps[i].done;
+        writeRoadmap(taskId, steps, notes);
+        renderCards(true);
+      });
+      const txt = document.createElement("span");
+      txt.className = "step-text";
+      txt.textContent = s.text;
+      txt.title = "Click to edit";
+      txt.addEventListener("click", () => {
+        const inp = document.createElement("input");
+        inp.className = "step-input";
+        inp.value = s.text;
+        const commit = () => {
+          if (!inp.isConnected) return;
+          const v = inp.value.trim();
+          if (v) steps[i].text = v; else steps.splice(i, 1);
+          writeRoadmap(taskId, steps, notes);
+          renderCards(true);
+        };
+        inp.addEventListener("keydown", e => {
+          if (e.key === "Enter") { e.preventDefault(); commit(); }
+          else if (e.key === "Escape") renderCards(true);
+        });
+        inp.addEventListener("blur", commit);
+        li.replaceChild(inp, txt);
+        inp.focus();
+        inp.setSelectionRange(inp.value.length, inp.value.length);
+      });
+      const drop = document.createElement("button");
+      drop.className = "drop";
+      drop.textContent = "×";
+      drop.setAttribute("aria-label", "Remove step: " + s.text);
+      drop.addEventListener("click", () => {
+        steps.splice(i, 1);
+        writeRoadmap(taskId, steps, notes);
+        renderCards(true);
+      });
+      li.append(check, txt, drop);
+      ul.append(li);
+    });
+    refs.scroll.append(ul);
+
+    const add = document.createElement("div");
+    add.className = "add-step";
+    const addInput = document.createElement("input");
+    addInput.type = "text";
+    addInput.placeholder = "Add a step…";
+    addInput.maxLength = 200;
+    addInput.setAttribute("aria-label", "Add a step");
+    addInput.addEventListener("keydown", e => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      const v = addInput.value.trim();
+      if (!v) return;
+      steps.push({ done: false, text: v });
+      addInput.value = "";
+      writeRoadmap(taskId, steps, notes);
+      renderCards(true);
+      const again = cardEls.get(taskId);
+      if (again) {
+        const inp = again.el.querySelector(".add-step input");
+        if (inp) inp.focus();
+      }
+    });
+    add.append(addInput);
+    refs.scroll.append(add);
+
+    const noteLabel = document.createElement("div");
+    noteLabel.className = "lbl";
+    noteLabel.textContent = "Notes";
+    const area = document.createElement("textarea");
+    area.value = notes;
+    area.placeholder = "Anything worth keeping while you work…";
+    area.setAttribute("aria-label", "Notes");
+    const saving = document.createElement("div");
+    saving.className = "saving";
+    let timer = null;
+    area.addEventListener("input", () => {
+      saving.textContent = "Saving…";
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        writeRoadmap(taskId, parseRoadmap(focusOf(taskId).roadmap).steps, area.value);
+        saving.textContent = "Saved";
+        setTimeout(() => { if (saving.textContent === "Saved") saving.textContent = ""; }, 1800);
+      }, 700);
+    });
+    refs.scroll.append(noteLabel, area, saving);
+
+    if (!focusInDb(taskId)) {
+      const up = document.createElement("button");
+      up.className = "upgrade";
+      up.textContent = "Kept in this browser — sync notes & timers across devices";
+      up.addEventListener("click", () => openSetup("focus"));
+      refs.scroll.append(up);
+    }
+  }
+
+  function renderCards(force) {
+    // drop cards whose task is gone or finished
+    for (const id of [...openCards]) {
+      const info = resolveTask(id);
+      if (!info || info.done) openCards = openCards.filter(x => x !== id);
+    }
+    saveCards();
+
+    for (const [id, entry] of cardEls) {
+      if (!openCards.includes(id)) { entry.el.remove(); cardEls.delete(id); }
+    }
+
+    openCards.forEach((taskId, i) => {
+      const info = resolveTask(taskId);
+      if (!info) return;
+      let entry = cardEls.get(taskId);
+      if (!entry) {
+        const built = buildCard(taskId, i);
+        entry = { el: built.el, refs: built.refs, sig: null };
+        cardEls.set(taskId, entry);
+      }
+      const slot = bucketIndexOf(taskId);
+      entry.el.style.setProperty("--pail", "var(--pail-" + (((slot === -1 ? i : slot) % 8) + 1) + ")");
+      entry.refs.badge.textContent = slot === -1 ? "•" : String(slot + 1);
+      entry.refs.t.textContent = info.text;
+      entry.refs.g.textContent = info.gardenLabel;
+      const running = isRunning(taskId);
+      entry.el.classList.toggle("paused", !running);
+      entry.refs.toggle.textContent = running ? "Pause" : "Start";
+
+      const f = focusOf(taskId);
+      const sig = [info.text, f.roadmap, focusInDb(taskId)].join("|");
+      const editing = entry.el.contains(document.activeElement);
+      if (force || (!editing && sig !== entry.sig)) {
+        fillCardBody(taskId, entry.refs);
+        entry.sig = sig;
+      }
+    });
+    tickClocks();
+  }
+
+  // one cheap pass a second: clocks in cards and live time on the pails
+  function tickClocks() {
+    for (const [taskId, entry] of cardEls) {
+      const f = focusOf(taskId);
+      entry.refs.elapsed.textContent = fmtClock(f.active_started_at ? elapsedOf(f) : f.time_logged_seconds);
+      entry.refs.total.textContent = f.active_started_at
+        ? "this session · " + fmtTotal(totalOf(f)) + " in all"
+        : fmtTotal(f.time_logged_seconds);
+    }
+    for (const el of bucketsEl.querySelectorAll(".bucket")) {
+      const face = el.querySelector(".pail-face");
+      if (!face) continue;
+      const taskId = el.dataset.taskId;
+      if (!taskId) continue;
+      const f = focusOf(taskId);
+      if (f.active_started_at) {
+        face.textContent = fmtClock(elapsedOf(f));
+        el.classList.add("running");
+      } else {
+        const { steps } = parseRoadmap(f.roadmap);
+        face.textContent = steps.length ? steps.filter(s => s.done).length + "/" + steps.length : "";
+        el.classList.remove("running");
+      }
+    }
+  }
+  setInterval(tickClocks, 1000);
 
   // ---------- task operations (same shape for both galaxies) ----------
   function taskTable(garden) { return garden.kind === "custom" ? "oasis_tasks" : "tasks"; }
@@ -1668,6 +2331,7 @@ notify pgrst, 'reload schema';
     }
 
     renderSync();
+    renderCards();
     scene.update(gardens, garden ? garden.id : null, galaxy.id);
   }
 
@@ -1691,7 +2355,29 @@ notify pgrst, 'reload schema';
 
   // ---------- galaxy setup card ----------
   const galaxySetup = $("galaxy-setup");
-  function openGalaxySetup() {
+  const SETUPS = {
+    galaxies: {
+      sql: SETUP_SQL,
+      title: "Make room for new galaxies",
+      text: "Your own galaxies need three small tables in your Foquito database. This is a one-time step.",
+      check: () => api("oasis_galaxies?select=id&limit=1"),
+      missing: "The galaxy tables aren't there yet. Make sure the code ran in Supabase without a red error, then try again."
+    },
+    focus: {
+      sql: FOCUS_SQL,
+      title: "Sync notes & timers",
+      text: "Notes, steps and timers on your own galaxy's tasks are kept in this browser until your database has three more columns. This is a one-time step.",
+      check: () => api("oasis_tasks?select=roadmap&limit=1"),
+      missing: "Those columns aren't there yet. Make sure the code ran in Supabase without a red error, then try again."
+    }
+  };
+  let setupKind = "galaxies";
+
+  function openSetup(kind) {
+    setupKind = kind;
+    const cfg = SETUPS[kind];
+    $("galaxy-setup-title").textContent = cfg.title;
+    $("galaxy-setup-text").textContent = cfg.text;
     try {
       const ref = new URL(SUPABASE_URL).hostname.split(".")[0];
       $("open-sql").href = "https://supabase.com/dashboard/project/" + ref + "/sql/new";
@@ -1699,13 +2385,16 @@ notify pgrst, 'reload schema';
       $("open-sql").href = "https://supabase.com/dashboard";
     }
     $("galaxy-setup-err").textContent = "";
+    $("copy-sql").textContent = "Copy";
     galaxySetup.hidden = false;
     $("copy-sql").focus();
   }
+  const openGalaxySetup = () => openSetup("galaxies");
+
   $("copy-sql").addEventListener("click", async () => {
     const btn = $("copy-sql");
     try {
-      await navigator.clipboard.writeText(SETUP_SQL);
+      await navigator.clipboard.writeText(SETUPS[setupKind].sql);
       btn.textContent = "Copied";
     } catch (e) {
       $("galaxy-setup-err").textContent = "Couldn't copy automatically — your browser blocked the clipboard.";
@@ -1714,20 +2403,50 @@ notify pgrst, 'reload schema';
   $("galaxy-setup-close").addEventListener("click", () => { galaxySetup.hidden = true; });
   $("galaxy-setup-done").addEventListener("click", async () => {
     const err = $("galaxy-setup-err");
+    const cfg = SETUPS[setupKind];
     err.textContent = "Checking…";
     try {
-      await api("oasis_galaxies?select=id&limit=1");
+      await cfg.check();
+    } catch (e) {
+      err.textContent = e.missingTable || e.message.includes("400")
+        ? cfg.missing
+        : "Couldn't reach Foquito — check your connection and try again.";
+      return;
+    }
+    galaxySetup.hidden = true;
+    err.textContent = "";
+    if (setupKind === "galaxies") {
       galaxiesReady = true;
-      galaxySetup.hidden = true;
-      err.textContent = "";
       await refresh();
       addGalaxy();
-    } catch (e) {
-      err.textContent = e.missingTable
-        ? "The galaxy tables aren't there yet. Make sure the code ran in Supabase without a red error, then try again."
-        : "Couldn't reach Foquito — check your connection and try again.";
+    } else {
+      oasisFocusReady = true;
+      await liftLocalFocus();
+      await refresh();
+      renderCards(true);
     }
   });
+
+  // Once the columns exist, move anything parked in this browser up to the
+  // database so nothing written in the meantime is lost.
+  async function liftLocalFocus() {
+    const ids = Object.keys(localFocus).filter(id => data.otasks.some(r => r.id === id));
+    for (const id of ids) {
+      const f = localFocus[id];
+      try {
+        await api("oasis_tasks?id=eq." + id, {
+          method: "PATCH",
+          body: JSON.stringify({
+            roadmap: f.roadmap || null,
+            active_started_at: f.active_started_at || null,
+            time_logged_seconds: f.time_logged_seconds || 0
+          })
+        });
+        delete localFocus[id];
+      } catch (e) { /* leave it parked; we'll try again next time */ }
+    }
+    saveLocalFocus();
+  }
 
   // ---------- the floating world ----------
   const scene = (() => {
