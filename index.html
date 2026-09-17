@@ -35,6 +35,10 @@
     --pail-6: #BC5C74;
     --pail-7: #7B9B54;
     --pail-8: #52A099;
+    --paper-1: #F3E4A8;
+    --paper-2: #F2D7E2;
+    --paper-3: #DCEDC8;
+    --paper-4: #D2E4F5;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -64,6 +68,10 @@
       --pail-6: #A55065;
       --pail-7: #6C884A;
       --pail-8: #488C86;
+      --paper-1: #D9CB92;
+      --paper-2: #D6B2AB;
+      --paper-3: #B7C9A9;
+      --paper-4: #B0C2D4;
     }
   }
 
@@ -573,6 +581,101 @@
     }
   }
 
+
+  /* ---- stickies in the bucket ---- */
+  .focus-bucket .bucket-hint {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.58);
+    font-style: italic;
+    padding: 6px 0 2px;
+  }
+  .stickies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 9px;
+    padding: 6px 2px 2px;
+  }
+  .sticky {
+    position: relative;
+    flex: 0 0 calc(50% - 5px);
+    min-height: 78px;
+    background: var(--paper);
+    color: #2A2A22;
+    border-radius: 2px;
+    padding: 9px 9px 8px;
+    font-size: 0.78rem;
+    line-height: 1.32;
+    cursor: text;
+    transform: rotate(var(--tilt));
+    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.22);
+    transition: transform 0.15s ease;
+  }
+  .sticky:hover { transform: rotate(0deg) translateY(-2px); z-index: 1; }
+  .sticky.done { opacity: 0.62; }
+  .sticky.done .sticky-text { text-decoration: line-through; }
+  .sticky-text { word-break: break-word; white-space: pre-wrap; }
+  .sticky.step { padding-left: 27px; }
+  .sticky .tick {
+    position: absolute;
+    top: 8px; left: 7px;
+    width: 15px; height: 15px;
+    border: 1.5px solid rgba(0, 0, 0, 0.42);
+    border-radius: 50%;
+    background: none;
+    color: var(--paper);
+    padding: 0;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+  }
+  .sticky .tick svg { opacity: 0; }
+  .sticky.done .tick { background: #2A2A22; border-color: #2A2A22; }
+  .sticky.done .tick svg { opacity: 1; }
+  .sticky .tick:focus-visible { outline: 2px solid #2A2A22; outline-offset: 1px; }
+  .sticky textarea {
+    width: 100%;
+    min-height: 58px;
+    background: none;
+    border: none;
+    resize: none;
+    font: inherit;
+    font-size: 0.78rem;
+    line-height: 1.32;
+    color: #2A2A22;
+    padding: 0;
+  }
+  .sticky textarea:focus { outline: none; }
+  @media (prefers-reduced-motion: reduce) { .sticky { transition: none; } }
+
+  /* ---- right-click menu ---- */
+  .menu {
+    position: fixed;
+    z-index: 40;
+    min-width: 186px;
+    background: var(--panel);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 5px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+    display: flex;
+    flex-direction: column;
+  }
+  .menu button {
+    background: none;
+    border: none;
+    text-align: left;
+    color: var(--ink);
+    font-size: 0.84rem;
+    padding: 7px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  .menu button:hover { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .menu button.danger:hover { background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger); }
+  .menu button:focus-visible { outline: 2px solid var(--accent); }
+  .menu hr { border: none; border-top: 1px solid var(--line); margin: 4px 6px; }
 
   /* the number now hovers beside the pail, leaving its face for live text */
   .bucket .num {
@@ -1422,25 +1525,28 @@ notify pgrst, 'reload schema';
 
   // roadmap text doubles as sub-steps: lines like "- [ ] step" / "- [x] step",
   // with anything else kept as free notes. Foquito shows the same field.
+  // Each line is one sticky: "- [ ] …" is a step, anything else is a note.
   const STEP_RE = /^- \[([ xX])\] ?(.*)$/;
   function parseRoadmap(text) {
-    const steps = [], notes = [];
+    const items = [];
     for (const line of (text || "").split("\n")) {
+      if (!line.trim()) continue;
       const m = line.match(STEP_RE);
-      if (m) steps.push({ done: m[1].toLowerCase() === "x", text: m[2] });
-      else notes.push(line);
+      if (m) items.push({ kind: "step", done: m[1].toLowerCase() === "x", text: m[2] });
+      else items.push({ kind: "note", done: false, text: line });
     }
-    return { steps, notes: notes.join("\n").replace(/^\n+|\n+$/g, "") };
+    return items;
   }
-  function serializeRoadmap(steps, notes) {
-    const lines = steps.map(s => "- [" + (s.done ? "x" : " ") + "] " + s.text);
-    const body = (notes || "").trim();
-    if (body) { if (lines.length) lines.push(""); lines.push(body); }
-    return lines.join("\n");
+  function serializeRoadmap(items) {
+    return items
+      .filter(i => i.text.trim())
+      .map(i => i.kind === "step" ? "- [" + (i.done ? "x" : " ") + "] " + i.text : i.text)
+      .join("\n");
   }
-  function writeRoadmap(taskId, steps, notes) {
-    setFocus(taskId, { roadmap: serializeRoadmap(steps, notes) }, "Notes didn't save");
+  function writeRoadmap(taskId, items) {
+    setFocus(taskId, { roadmap: serializeRoadmap(items) }, "Notes didn't save");
   }
+  const stepsOf = items => items.filter(i => i.kind === "step");
 
   // ---------- priority buckets ----------
   const bucketIndexOf = taskId => buckets.indexOf(taskId);
@@ -1710,6 +1816,20 @@ notify pgrst, 'reload schema';
     el.style.top = pos.y + "px";
     el.addEventListener("pointerdown", () => raiseCard(el), true);
     el.addEventListener("animationend", () => el.classList.remove("popping"));
+    el.addEventListener("contextmenu", e => {
+      if (e.target.closest(".sticky")) return;      // stickies bring their own menu
+      e.preventDefault();
+      bucketMenu(taskId, e.clientX, e.clientY);
+    });
+    // touch: press and hold opens the same menu
+    let holdTimer = null;
+    el.addEventListener("pointerdown", e => {
+      if (e.pointerType !== "touch" || e.target.closest(".sticky, button, textarea")) return;
+      holdTimer = setTimeout(() => bucketMenu(taskId, e.clientX, e.clientY), 520);
+    });
+    for (const done of ["pointerup", "pointermove", "pointercancel"]) {
+      el.addEventListener(done, () => { clearTimeout(holdTimer); });
+    }
 
     // the pail itself: handle over a rim, then the tapered body holding everything
     el.insertAdjacentHTML("beforeend",
@@ -1808,125 +1928,167 @@ notify pgrst, 'reload schema';
     return { el, refs: { badge, t, g, elapsed, total, toggle, scroll } };
   }
 
+  // What's in the bucket: one sticky per note or step. Nothing is added until
+  // you ask for it from the right-click menu, so an idle bucket stays quiet.
+  const PAPERS = 4;
+
   function fillCardBody(taskId, refs) {
-    const { steps, notes } = parseRoadmap(focusOf(taskId).roadmap);
+    const items = parseRoadmap(focusOf(taskId).roadmap);
     refs.scroll.textContent = "";
 
-    const stepLabel = document.createElement("div");
-    stepLabel.className = "lbl";
-    stepLabel.textContent = steps.length
-      ? "Steps · " + steps.filter(s => s.done).length + "/" + steps.length
-      : "Steps";
-    refs.scroll.append(stepLabel);
+    if (!items.length) {
+      const hint = document.createElement("div");
+      hint.className = "bucket-hint";
+      hint.textContent = "Right-click for notes and steps";
+      refs.scroll.append(hint);
+      return;
+    }
 
-    const ul = document.createElement("ul");
-    ul.className = "steps";
-    steps.forEach((s, i) => {
-      const li = document.createElement("li");
-      if (s.done) li.className = "done";
-      const check = document.createElement("button");
-      check.className = "check";
-      check.innerHTML = CHECK_SVG_CC;
-      check.setAttribute("aria-pressed", String(s.done));
-      check.setAttribute("aria-label", (s.done ? "Undo step: " : "Finish step: ") + s.text);
-      check.addEventListener("click", () => {
-        steps[i].done = !steps[i].done;
-        writeRoadmap(taskId, steps, notes);
+    const wrap = document.createElement("div");
+    wrap.className = "stickies";
+    items.forEach((item, i) => wrap.append(stickyEl(taskId, items, item, i)));
+    refs.scroll.append(wrap);
+  }
+
+  function stickyEl(taskId, items, item, i) {
+    const el = document.createElement("div");
+    el.className = "sticky" + (item.kind === "step" ? " step" : "") + (item.done ? " done" : "");
+    el.style.setProperty("--paper", "var(--paper-" + ((i % PAPERS) + 1) + ")");
+    el.style.setProperty("--tilt", (((i * 7) % 5) - 2) + "deg");
+
+    if (item.kind === "step") {
+      const tick = document.createElement("button");
+      tick.className = "tick";
+      tick.innerHTML = CHECK_SVG_CC;
+      tick.setAttribute("aria-pressed", String(item.done));
+      tick.setAttribute("aria-label", (item.done ? "Undo step: " : "Finish step: ") + item.text);
+      tick.addEventListener("click", e => {
+        e.stopPropagation();
+        items[i].done = !items[i].done;
+        writeRoadmap(taskId, items);
         renderCards(true);
       });
-      const txt = document.createElement("span");
-      txt.className = "step-text";
-      txt.textContent = s.text;
-      txt.title = "Click to edit";
-      txt.addEventListener("click", () => {
-        const inp = document.createElement("input");
-        inp.className = "step-input";
-        inp.value = s.text;
-        const commit = () => {
-          if (!inp.isConnected) return;
-          const v = inp.value.trim();
-          if (v) steps[i].text = v; else steps.splice(i, 1);
-          writeRoadmap(taskId, steps, notes);
-          renderCards(true);
-        };
-        inp.addEventListener("keydown", e => {
-          if (e.key === "Enter") { e.preventDefault(); commit(); }
-          else if (e.key === "Escape") renderCards(true);
-        });
-        inp.addEventListener("blur", commit);
-        li.replaceChild(inp, txt);
-        inp.focus();
-        inp.setSelectionRange(inp.value.length, inp.value.length);
-      });
-      const drop = document.createElement("button");
-      drop.className = "drop";
-      drop.textContent = "×";
-      drop.setAttribute("aria-label", "Remove step: " + s.text);
-      drop.addEventListener("click", () => {
-        steps.splice(i, 1);
-        writeRoadmap(taskId, steps, notes);
-        renderCards(true);
-      });
-      li.append(check, txt, drop);
-      ul.append(li);
-    });
-    refs.scroll.append(ul);
+      el.append(tick);
+    }
 
-    const add = document.createElement("div");
-    add.className = "add-step";
-    const addInput = document.createElement("input");
-    addInput.type = "text";
-    addInput.placeholder = "Add a step…";
-    addInput.maxLength = 200;
-    addInput.setAttribute("aria-label", "Add a step");
-    addInput.addEventListener("keydown", e => {
-      if (e.key !== "Enter") return;
+    const text = document.createElement("div");
+    text.className = "sticky-text";
+    text.textContent = item.text;
+    el.append(text);
+
+    el.title = "Click to edit · right-click for more";
+    el.addEventListener("click", () => editSticky(taskId, items, i, el));
+    el.addEventListener("contextmenu", e => {
       e.preventDefault();
-      const v = addInput.value.trim();
-      if (!v) return;
-      steps.push({ done: false, text: v });
-      addInput.value = "";
-      writeRoadmap(taskId, steps, notes);
-      renderCards(true);
-      const again = cardEls.get(taskId);
-      if (again) {
-        const inp = again.el.querySelector(".add-step input");
-        if (inp) inp.focus();
-      }
+      e.stopPropagation();
+      openMenu(e.clientX, e.clientY, [
+        { label: "Edit", run: () => editSticky(taskId, items, i, el) },
+        item.kind === "step"
+          ? { label: "Make it a note", run: () => { items[i].kind = "note"; items[i].done = false; writeRoadmap(taskId, items); renderCards(true); } }
+          : { label: "Make it a step", run: () => { items[i].kind = "step"; writeRoadmap(taskId, items); renderCards(true); } },
+        { label: "Throw away", danger: true, run: () => { items.splice(i, 1); writeRoadmap(taskId, items); renderCards(true); } }
+      ]);
     });
-    add.append(addInput);
-    refs.scroll.append(add);
+    return el;
+  }
 
-    const noteLabel = document.createElement("div");
-    noteLabel.className = "lbl";
-    noteLabel.textContent = "Notes";
+  function editSticky(taskId, items, i, el) {
+    if (el.querySelector("textarea")) return;
     const area = document.createElement("textarea");
-    area.value = notes;
-    area.placeholder = "Anything worth keeping while you work…";
-    area.setAttribute("aria-label", "Notes");
-    const saving = document.createElement("div");
-    saving.className = "saving";
-    let timer = null;
-    area.addEventListener("input", () => {
-      saving.textContent = "Saving…";
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        writeRoadmap(taskId, parseRoadmap(focusOf(taskId).roadmap).steps, area.value);
-        saving.textContent = "Saved";
-        setTimeout(() => { if (saving.textContent === "Saved") saving.textContent = ""; }, 1800);
-      }, 700);
+    area.value = items[i].text;
+    area.rows = 1;
+    area.setAttribute("aria-label", "Sticky text");
+    const commit = () => {
+      if (!area.isConnected) return;
+      const v = area.value.trim();
+      if (v) items[i].text = v; else items.splice(i, 1);
+      writeRoadmap(taskId, items);
+      renderCards(true);
+    };
+    area.addEventListener("keydown", e => {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); commit(); }
+      else if (e.key === "Escape") renderCards(true);
     });
-    refs.scroll.append(noteLabel, area, saving);
+    area.addEventListener("blur", commit);
+    area.addEventListener("click", e => e.stopPropagation());
+    const txt = el.querySelector(".sticky-text");
+    el.replaceChild(area, txt);
+    area.focus();
+    area.setSelectionRange(area.value.length, area.value.length);
+  }
 
-    if (!focusInDb(taskId)) {
-      const up = document.createElement("button");
-      up.className = "upgrade";
-      up.textContent = "Kept in this browser — sync notes & timers across devices";
-      up.addEventListener("click", () => openSetup("focus"));
-      refs.scroll.append(up);
+  function addSticky(taskId, kind) {
+    const items = parseRoadmap(focusOf(taskId).roadmap);
+    items.push({ kind, done: false, text: kind === "step" ? "New step" : "New note" });
+    writeRoadmap(taskId, items);
+    renderCards(true);
+    const entry = cardEls.get(taskId);
+    if (!entry) return;
+    const stickies = entry.el.querySelectorAll(".sticky");
+    const last = stickies[stickies.length - 1];
+    if (last) {
+      const fresh = parseRoadmap(focusOf(taskId).roadmap);
+      editSticky(taskId, fresh, fresh.length - 1, last);
+      const area = last.querySelector("textarea");
+      if (area) area.select();
     }
   }
 
+  // ---------- right-click menu ----------
+  let menuEl = null;
+  function closeMenu() {
+    if (menuEl) { menuEl.remove(); menuEl = null; }
+  }
+  function openMenu(x, y, entries) {
+    closeMenu();
+    const m = document.createElement("div");
+    m.className = "menu";
+    for (const entry of entries) {
+      if (entry.sep) { m.append(document.createElement("hr")); continue; }
+      const b = document.createElement("button");
+      b.textContent = entry.label;
+      if (entry.danger) b.className = "danger";
+      b.addEventListener("click", () => { closeMenu(); entry.run(); });
+      m.append(b);
+    }
+    m.style.left = "0px";
+    m.style.top = "0px";
+    document.body.append(m);
+    const r = m.getBoundingClientRect();
+    m.style.left = Math.min(x, window.innerWidth - r.width - 8) + "px";
+    m.style.top = Math.min(y, window.innerHeight - r.height - 8) + "px";
+    menuEl = m;
+  }
+  window.addEventListener("pointerdown", e => {
+    if (menuEl && !menuEl.contains(e.target)) closeMenu();
+  }, true);
+  window.addEventListener("keydown", e => { if (e.key === "Escape") closeMenu(); });
+  window.addEventListener("blur", closeMenu);
+
+  function bucketMenu(taskId, x, y) {
+    const running = isRunning(taskId);
+    const entries = [
+      { label: "Add a note", run: () => addSticky(taskId, "note") },
+      { label: "Add a step", run: () => addSticky(taskId, "step") },
+      { sep: true },
+      { label: running ? "Pause the timer" : "Start the timer",
+        run: () => { running ? stopTimer(taskId) : startTimer(taskId); renderCards(); renderBuckets(); } },
+      { label: "Mark done", run: () => {
+          const info = resolveTask(taskId);
+          if (!info) return;
+          stopTimer(taskId);
+          openCards = openCards.filter(id => id !== taskId);
+          saveCards();
+          toggleTask(info.garden, { id: taskId, text: info.text, done: info.done });
+        } }
+    ];
+    if (!focusInDb(taskId)) {
+      entries.push({ sep: true },
+        { label: "Sync notes & timers across devices", run: () => openSetup("focus") });
+    }
+    entries.push({ sep: true }, { label: "Close the bucket", run: () => closeCard(taskId) });
+    openMenu(x, y, entries);
+  }
   function renderCards(force) {
     // drop cards whose task is gone or finished
     for (const id of [...openCards]) {
@@ -1987,7 +2149,7 @@ notify pgrst, 'reload schema';
         face.textContent = fmtClock(elapsedOf(f));
         el.classList.add("running");
       } else {
-        const { steps } = parseRoadmap(f.roadmap);
+        const steps = stepsOf(parseRoadmap(f.roadmap));
         face.textContent = steps.length ? steps.filter(s => s.done).length + "/" + steps.length : "";
         el.classList.remove("running");
       }
