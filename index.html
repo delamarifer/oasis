@@ -26,6 +26,15 @@
     --bloom-c: #5B8FBF;
     --bloom-d: #9B7FBF;
     --danger: #C0563B;
+    /* painted pails, one per bucket slot */
+    --pail-1: #D9694E;
+    --pail-2: #D69A33;
+    --pail-3: #4886B8;
+    --pail-4: #8A72BC;
+    --pail-5: #47876B;
+    --pail-6: #BC5C74;
+    --pail-7: #7B9B54;
+    --pail-8: #52A099;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -47,6 +56,14 @@
       --bloom-c: #74A5D3;
       --bloom-d: #AE93D4;
       --danger: #E07B5D;
+      --pail-1: #C25F46;
+      --pail-2: #BE882C;
+      --pail-3: #3F76A2;
+      --pail-4: #7A64A6;
+      --pail-5: #3E7860;
+      --pail-6: #A55065;
+      --pail-7: #6C884A;
+      --pail-8: #488C86;
     }
   }
 
@@ -172,68 +189,63 @@
     gap: 10px;
   }
   .bucket {
-    flex: 0 1 190px;
-    min-width: 150px;
+    position: relative;
+    flex: 0 0 122px;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 10px;
-    background: var(--panel);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--line);
+    gap: 2px;
+    padding: 2px 4px 6px;
     border-radius: 12px;
-    padding: 9px 11px;
     cursor: grab;
     touch-action: none;
   }
-  .bucket.empty {
-    border-style: dashed;
-    background: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    cursor: default;
+  .bucket.empty { cursor: default; }
+  .bucket .pail {
+    display: block;
+    width: 84px;
+    height: 82px;
+    transition: transform 0.18s ease;
   }
-  .bucket.over { border-color: var(--accent); border-style: solid; }
-  .bucket.lifted { opacity: 0.35; }
-  .bucket .num {
-    flex: none;
-    width: 20px; height: 20px;
-    border-radius: 50%;
-    background: var(--line);
-    color: var(--ink-soft);
-    font-size: 0.72rem;
-    font-weight: 700;
-    display: grid;
-    place-items: center;
-    font-variant-numeric: tabular-nums;
-  }
-  .bucket.filled .num { background: var(--accent); color: var(--ground); }
-  .bucket .body { flex: 1; min-width: 0; }
+  .bucket.empty .pail { opacity: 0.42; }
+  .bucket.over .pail { transform: translateY(-5px) scale(1.06); }
+  .bucket.over { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  .bucket.lifted { opacity: 0.3; }
   .bucket .title {
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     line-height: 1.25;
+    text-align: center;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
   .bucket .src {
-    font-size: 0.68rem;
-    letter-spacing: 0.06em;
+    font-size: 0.64rem;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--ink-faint);
-    margin-top: 2px;
+    margin-top: 1px;
   }
-  .bucket .placeholder { font-size: 0.8rem; color: var(--ink-faint); font-style: italic; }
-  .bucket .check { width: 18px; height: 18px; }
+  .bucket .placeholder { font-size: 0.75rem; color: var(--ink-faint); font-style: italic; }
+  .bucket .check {
+    position: absolute;
+    top: 42px; left: 8px;
+    width: 19px; height: 19px;
+    background: var(--ground);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .bucket:hover .check, .bucket .check:focus-visible { opacity: 1; }
   .bucket .clear {
-    flex: none;
+    position: absolute;
+    top: 6px; right: 6px;
     background: none;
     border: none;
     color: var(--ink-faint);
     font-size: 0.9rem;
     line-height: 1;
-    padding: 3px 4px;
+    padding: 2px 5px;
     cursor: pointer;
     border-radius: 4px;
     opacity: 0;
@@ -242,6 +254,9 @@
   .bucket:hover .clear, .clear:focus-visible { opacity: 1; }
   .bucket .clear:hover { color: var(--danger); }
   .bucket .clear:focus-visible { outline: 2px solid var(--accent); }
+  @media (prefers-reduced-motion: reduce) {
+    .bucket .pail, .bucket .check, .bucket .clear { transition: none; }
+  }
   .buckets .add {
     flex: none;
     align-self: center;
@@ -1118,17 +1133,39 @@ notify pgrst, 'reload schema';
     if (renderQueued) { renderQueued = false; render(); }
   }
 
+  // A garden pail: tapered ribbed body, wire handle with a wooden grip, and a
+  // sprout in the ones that are holding something. Shading is plain black/white
+  // washes over the slot color, so any pail color works in either theme.
+  function pailSVG(number, filled) {
+    return '<svg class="pail" viewBox="0 0 84 82" aria-hidden="true">' +
+      '<ellipse cx="42" cy="75" rx="27" ry="4" fill="#000" opacity="0.10"/>' +
+      '<path d="M15 26 Q42 -1 69 26" fill="none" stroke="var(--ink-faint)" stroke-width="2.4" stroke-linecap="round"/>' +
+      '<rect x="35" y="4" width="14" height="7" rx="3.5" fill="var(--soil-light)"/>' +
+      '<path d="M16 26 L22 67 Q42 73 62 67 L68 26 Z" fill="var(--pail)"/>' +
+      '<path d="M16 26 L22 67 Q27 68.5 31 69.4 L27 26 Z" fill="#fff" opacity="0.17"/>' +
+      '<path d="M57 26 L53 69.4 Q58 68.5 62 67 L68 26 Z" fill="#000" opacity="0.15"/>' +
+      '<path d="M17.4 38 L66.6 38 M18.8 48 L65.2 48" stroke="#000" opacity="0.09" stroke-width="2.6"/>' +
+      '<ellipse cx="42" cy="26" rx="27" ry="7.4" fill="var(--pail)"/>' +
+      '<ellipse cx="42" cy="26" rx="27" ry="7.4" fill="none" stroke="#fff" opacity="0.22" stroke-width="1.4"/>' +
+      '<ellipse cx="42" cy="26.8" rx="23" ry="5.8" fill="#000" opacity="0.32"/>' +
+      (filled
+        ? '<g><path d="M42 27 C41 20 39 16 35.5 12.5" fill="none" stroke="var(--leaf)" stroke-width="2.2" stroke-linecap="round"/>' +
+          '<ellipse cx="32.5" cy="11.5" rx="4.6" ry="2.7" transform="rotate(-28 32.5 11.5)" fill="var(--leaf)"/>' +
+          '<ellipse cx="45" cy="16" rx="4.2" ry="2.5" transform="rotate(24 45 16)" fill="var(--leaf-2)"/></g>'
+        : "") +
+      '<text x="42" y="56" text-anchor="middle" font-family="Mulish, sans-serif" font-size="15" ' +
+      'font-weight="700" fill="var(--ground)" opacity="0.92">' + number + "</text>" +
+      "</svg>";
+  }
+
   function renderBuckets() {
     bucketsEl.textContent = "";
     buckets.forEach((taskId, i) => {
       const t = taskId ? resolveTask(taskId) : null;
       const el = document.createElement("div");
       el.className = "bucket" + (t ? " filled" : " empty");
-
-      const num = document.createElement("span");
-      num.className = "num";
-      num.textContent = String(i + 1);
-      el.append(num);
+      el.style.setProperty("--pail", "var(--pail-" + ((i % 8) + 1) + ")");
+      el.insertAdjacentHTML("afterbegin", pailSVG(i + 1, !!t));
 
       if (t) {
         const check = document.createElement("button");
@@ -1738,6 +1775,11 @@ notify pgrst, 'reload schema';
 
     readColors();
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => setTimeout(readColors, 40));
+    // belt and braces: some hosts flip the theme without firing that event
+    setInterval(() => {
+      const v = getComputedStyle(document.documentElement).getPropertyValue("--soil-top").trim();
+      if (v && v !== colors["--soil-top"]) readColors();
+    }, 400);
 
     function resize() {
       cssW = window.innerWidth;
