@@ -420,6 +420,7 @@
     font-variant-numeric: tabular-nums;
   }
   .focus-bucket.paused .elapsed { color: rgba(255, 255, 255, 0.62); }
+  .focus-bucket .elapsed.long { color: #FFD98A; }
   .focus-bucket .meter {
     position: relative;
     flex: 1;
@@ -684,6 +685,31 @@
   .menu button.danger:hover { background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger); }
   .menu button:focus-visible { outline: 2px solid var(--accent); }
   .menu hr { border: none; border-top: 1px solid var(--line); margin: 4px 6px; }
+  .menu.stop-editor {
+    min-width: 232px;
+    gap: 7px;
+    padding: 11px;
+  }
+  .stop-editor .note { font-size: 0.76rem; color: var(--ink-soft); line-height: 1.35; }
+  .stop-editor input {
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.82rem;
+    padding: 6px 8px;
+  }
+  .stop-editor input:focus { outline: none; border-color: var(--accent); }
+  .stop-editor .err { color: var(--danger); font-size: 0.72rem; min-height: 0.9em; }
+  .stop-editor button.primary {
+    background: var(--accent);
+    color: var(--ground);
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+  }
+  .stop-editor button.primary:hover { background: var(--accent); opacity: 0.9; }
 
   /* the number now hovers beside the pail, leaving its face for live text */
   .bucket .num {
@@ -2084,6 +2110,66 @@ notify pgrst, 'reload schema';
   window.addEventListener("keydown", e => { if (e.key === "Escape") closeMenu(); });
   window.addEventListener("blur", closeMenu);
 
+  // Left a timer running overnight? Say when you actually stopped and only
+  // that stretch is banked.
+  const toLocalInput = d => {
+    const dt = new Date(d), p = n => String(n).padStart(2, "0");
+    return dt.getFullYear() + "-" + p(dt.getMonth() + 1) + "-" + p(dt.getDate()) +
+      "T" + p(dt.getHours()) + ":" + p(dt.getMinutes());
+  };
+
+  function openStopEditor(taskId, x, y) {
+    closeMenu();
+    const f = focusOf(taskId);
+    if (!f.active_started_at) return;
+    const m = document.createElement("div");
+    m.className = "menu stop-editor";
+
+    const lbl = document.createElement("div");
+    lbl.className = "note";
+    lbl.textContent = "Running since " + new Date(f.active_started_at)
+      .toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" }) +
+      ". When did you stop?";
+
+    const input = document.createElement("input");
+    input.type = "datetime-local";
+    input.min = toLocalInput(f.active_started_at);
+    input.max = toLocalInput(new Date());
+    input.value = toLocalInput(new Date());
+    input.setAttribute("aria-label", "When you stopped");
+
+    const err = document.createElement("div");
+    err.className = "err";
+
+    const btn = document.createElement("button");
+    btn.className = "primary";
+    btn.textContent = "Bank that time";
+    btn.addEventListener("click", () => {
+      const stopped = new Date(input.value).getTime();
+      const started = new Date(f.active_started_at).getTime();
+      if (!input.value || isNaN(stopped)) { err.textContent = "Pick a date and time."; return; }
+      if (stopped < started) { err.textContent = "That's before the timer started."; return; }
+      const elapsed = Math.round((stopped - started) / 1000);
+      setFocus(taskId, {
+        active_started_at: null,
+        time_logged_seconds: f.time_logged_seconds + elapsed
+      }, "Couldn't correct the timer");
+      closeMenu();
+      renderCards(true);
+      renderBuckets();
+    });
+
+    m.append(lbl, input, err, btn);
+    m.style.left = "0px";
+    m.style.top = "0px";
+    document.body.append(m);
+    const r = m.getBoundingClientRect();
+    m.style.left = Math.min(x, window.innerWidth - r.width - 8) + "px";
+    m.style.top = Math.min(y, window.innerHeight - r.height - 8) + "px";
+    menuEl = m;
+    input.focus();
+  }
+
   function bucketMenu(taskId, x, y) {
     const running = isRunning(taskId);
     const entries = [
@@ -2101,6 +2187,9 @@ notify pgrst, 'reload schema';
           toggleTask(info.garden, { id: taskId, text: info.text, done: info.done });
         } }
     ];
+    if (running) {
+      entries.splice(4, 0, { label: "I stopped earlier…", run: () => openStopEditor(taskId, x, y) });
+    }
     if (!focusInDb(taskId)) {
       entries.push({ sep: true },
         { label: "Sync notes & timers across devices", run: () => openSetup("focus") });
@@ -2152,7 +2241,12 @@ notify pgrst, 'reload schema';
   function tickClocks() {
     for (const [taskId, entry] of cardEls) {
       const f = focusOf(taskId);
-      entry.refs.elapsed.textContent = fmtClock(f.active_started_at ? elapsedOf(f) : f.time_logged_seconds);
+      const live = f.active_started_at ? elapsedOf(f) : 0;
+      entry.refs.elapsed.textContent = fmtClock(f.active_started_at ? live : f.time_logged_seconds);
+      entry.refs.elapsed.classList.toggle("long", live > 8 * 3600);
+      entry.refs.elapsed.title = live > 8 * 3600
+        ? "Still running after " + Math.floor(live / 3600) + "h — right-click to say when you stopped"
+        : "";
       const banked = totalOf(f);
       const target = targetSeconds(taskId);
       entry.refs.fill.style.width = Math.min(100, (banked / target) * 100).toFixed(1) + "%";
