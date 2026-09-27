@@ -1560,6 +1560,12 @@ notify pgrst, 'reload schema';
     if (isRunning(taskId)) return;
     setFocus(taskId, { active_started_at: new Date().toISOString() }, "Timer didn't start");
   }
+  // started the clock, then didn't do the thing: drop the session, bank nothing
+  function resetTimer(taskId) {
+    if (!isRunning(taskId)) return;
+    setFocus(taskId, { active_started_at: null }, "Couldn't reset the timer");
+  }
+
   function stopTimer(taskId) {
     const f = focusOf(taskId);
     if (!f.active_started_at) return;
@@ -2188,7 +2194,9 @@ notify pgrst, 'reload schema';
         } }
     ];
     if (running) {
-      entries.splice(4, 0, { label: "I stopped earlier…", run: () => openStopEditor(taskId, x, y) });
+      entries.splice(4, 0,
+        { label: "I stopped earlier…", run: () => openStopEditor(taskId, x, y) },
+        { label: "Reset — don't count this", run: () => { resetTimer(taskId); renderCards(); renderBuckets(); } });
     }
     if (!focusInDb(taskId)) {
       entries.push({ sep: true },
